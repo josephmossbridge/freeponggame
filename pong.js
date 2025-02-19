@@ -10,8 +10,8 @@ const playerSpeed = 5; // Smooth player movement
 
 // Ball properties (baseline speed)
 let ballX = canvas.width / 2, ballY = canvas.height / 2;
-let baseBallSpeedX = 7; // Faster baseline speed
-let baseBallSpeedY = 7;
+let baseBallSpeedX = 6.3; // 10% slower than before (7 -> 6.3)
+let baseBallSpeedY = 6.3;
 let ballSpeedX = baseBallSpeedX;
 let ballSpeedY = baseBallSpeedY;
 let ballRadius = 8;
@@ -23,10 +23,10 @@ const maxScore = 5; // First to 5 wins
 
 // AI Difficulty Levels (affects ball speed and AI reaction)
 const difficulties = {
-    "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.8 },  // Slower ball
-    "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 }, // Normal speed
-    "Hard": { aiReaction: 0.8, ballSpeedMultiplier: 1.3 },   // Faster ball
-    "Insane": { aiReaction: 1.2, ballSpeedMultiplier: 1.7 }  // Very fast ball
+    "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.72 },  // 10% slower (0.8 → 0.72)
+    "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 0.9 },  // 10% slower (1.0 → 0.9)
+    "Hard": { aiReaction: 0.8, ballSpeedMultiplier: 1.17 },   // 10% slower (1.3 → 1.17)
+    "Insane": { aiReaction: 1.2, ballSpeedMultiplier: 1.7 }   // Insane mode unchanged
 };
 let aiDifficulty = "Medium"; // Default difficulty
 
