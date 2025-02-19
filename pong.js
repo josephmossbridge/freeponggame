@@ -116,14 +116,23 @@ function resetBall() {
 
 // Save to leaderboard (Top 10 scores)
 function saveToLeaderboard(score, difficulty) {
+    // Temporarily remove key listeners to allow typing
+    document.removeEventListener("keydown", handleKeydown);
+    document.removeEventListener("keyup", handleKeyup);
+
     let name = prompt("You won! Enter your name:");
-    if (!name) return;
+    if (!name) {
+        restoreKeyListeners(); // Restore movement if name entry is canceled
+        return;
+    }
 
     leaderboard.push({ name, score, difficulty, date: new Date().toLocaleDateString() });
     leaderboard.sort((a, b) => b.score - a.score);
     leaderboard = leaderboard.slice(0, 10); // Keep top 10
     localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
     updateLeaderboard();
+
+    restoreKeyListeners(); // Restore movement after entering name
 }
 
 // Update leaderboard display
@@ -133,6 +142,31 @@ function updateLeaderboard() {
         `<li>${entry.name} - ${entry.score} (${entry.difficulty})</li>`
     ).join("");
 }
+
+// Handle key events (Fix movement issue)
+function handleKeydown(event) {
+    if (event.key === "ArrowUp") moveUp = true;
+    if (event.key === "ArrowDown") moveDown = true;
+    if (event.key === "1") changeDifficulty("Easy");
+    if (event.key === "2") changeDifficulty("Medium");
+    if (event.key === "3") changeDifficulty("Hard");
+    if (event.key === "4") changeDifficulty("Insane");
+}
+
+function handleKeyup(event) {
+    if (event.key === "ArrowUp") moveUp = false;
+    if (event.key === "ArrowDown") moveDown = false;
+}
+
+// Restore key listeners after leaderboard input
+function restoreKeyListeners() {
+    document.addEventListener("keydown", handleKeydown);
+    document.addEventListener("keyup", handleKeyup);
+}
+
+// Add key listeners
+document.addEventListener("keydown", handleKeydown);
+document.addEventListener("keyup", handleKeyup);
 
 // Load leaderboard on page load
 updateLeaderboard();
