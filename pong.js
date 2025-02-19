@@ -6,17 +6,20 @@ const ctx = canvas.getContext("2d");
 const paddleWidth = 10, paddleHeight = 80;
 let playerY = canvas.height / 2 - paddleHeight / 2;
 let aiY = playerY;
-const paddleSpeed = 5;
+const paddleSpeed = 8; // Increased speed
 
 // Ball properties
 let ballX = canvas.width / 2, ballY = canvas.height / 2;
 let ballSpeedX = 4, ballSpeedY = 4, ballRadius = 8;
 
+// Player movement tracking
+let moveUp = false, moveDown = false;
+
 // Game loop
 function gameLoop() {
-    draw();  
-    move();  
-    requestAnimationFrame(gameLoop); 
+    move();
+    draw();
+    requestAnimationFrame(gameLoop);
 }
 
 // Draw game elements
@@ -42,18 +45,44 @@ function move() {
 
     // Ball collision with top/bottom
     if (ballY - ballRadius < 0 || ballY + ballRadius > canvas.height) {
-        ballSpeedY *= -1;
+        ballSpeedY *= -1; // Reverse Y direction
     }
 
-    // AI follows ball (simple AI)
-    if (aiY + paddleHeight / 2 < ballY) aiY += paddleSpeed;
-    else if (aiY + paddleHeight / 2 > ballY) aiY -= paddleSpeed;
+    // Ball collision with paddles
+    if (
+        (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) ||
+        (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight)
+    ) {
+        ballSpeedX *= -1; // Reverse X direction
+    }
+
+    // Ball out of bounds (reset)
+    if (ballX < 0 || ballX > canvas.width) {
+        ballX = canvas.width / 2;
+        ballY = canvas.height / 2;
+        ballSpeedX = -ballSpeedX; // Reverse direction after reset
+    }
+
+    // AI follows ball with slight delay
+    if (aiY + paddleHeight / 2 < ballY - 10) {
+        aiY += paddleSpeed * 0.6; // Move slower for fairness
+    } else if (aiY + paddleHeight / 2 > ballY + 10) {
+        aiY -= paddleSpeed * 0.6;
+    }
+
+    // Player movement
+    if (moveUp && playerY > 0) playerY -= paddleSpeed;
+    if (moveDown && playerY < canvas.height - paddleHeight) playerY += paddleSpeed;
 }
 
-// Player movement
+// Listen for key presses
 document.addEventListener("keydown", (event) => {
-    if (event.key === "ArrowUp" && playerY > 0) playerY -= paddleSpeed;
-    if (event.key === "ArrowDown" && playerY < canvas.height - paddleHeight) playerY += paddleSpeed;
+    if (event.key === "ArrowUp") moveUp = true;
+    if (event.key === "ArrowDown") moveDown = true;
+});
+document.addEventListener("keyup", (event) => {
+    if (event.key === "ArrowUp") moveUp = false;
+    if (event.key === "ArrowDown") moveDown = false;
 });
 
 // Start game loop
