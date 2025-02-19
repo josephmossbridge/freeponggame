@@ -5,13 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Free Pong Game</title>
     <style>
-        body { text-align: center; background: black; color: white; }
-        canvas { border: 2px solid white; display: block; margin: auto; }
+        body { text-align: center; background: black; color: white; font-family: Arial, sans-serif; }
+        .container { display: flex; justify-content: center; align-items: center; }
+        canvas { border: 2px solid white; display: block; margin-right: 20px; }
+        .instructions {
+            text-align: left;
+            font-size: 16px;
+            padding: 10px;
+            border: 2px solid white;
+            background: #222;
+            max-width: 180px;
+        }
     </style>
 </head>
 <body>
     <h1>Free Pong Game</h1>
-    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <div class="container">
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+        <div class="instructions">
+            <h3>Controls</h3>
+            <p>⬆️ Arrow Up: Move Up</p>
+            <p>⬇️ Arrow Down: Move Down</p>
+            <h3>Difficulty</h3>
+            <p>1️⃣ Press 1 - Easy</p>
+            <p>2️⃣ Press 2 - Medium</p>
+            <p>3️⃣ Press 3 - Hard</p>
+            <p>4️⃣ Press 4 - Insane</p>
+        </div>
+    </div>
     <script src="pong.js"></script>
 </body>
 </html>
