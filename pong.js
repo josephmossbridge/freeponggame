@@ -7,6 +7,7 @@ const paddleWidth = 10, paddleHeight = 80;
 let playerY = canvas.height / 2 - paddleHeight / 2;
 let aiY = playerY;
 const playerSpeed = 5; // Smooth player movement
+let lastPlayerY = playerY; // Track previous Y position for physics
 
 // Ball properties
 let ballX = canvas.width / 2, ballY = canvas.height / 2;
@@ -17,6 +18,7 @@ let ballRadius = 8;
 // Score tracking
 let playerScore = 0, aiScore = 0;
 const maxScore = 5; // First to 5 wins
+let gameOver = false; // Track if game has ended
 
 // AI Difficulty Levels
 const difficulties = {
@@ -35,9 +37,11 @@ let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
 
 // Game loop
 function gameLoop() {
-    move();
-    draw();
-    requestAnimationFrame(gameLoop);
+    if (!gameOver) {
+        move();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
 }
 
 // Draw game elements
@@ -63,6 +67,18 @@ function draw() {
 
     // Draw difficulty setting
     ctx.fillText(`Difficulty: ${aiDifficulty}`, canvas.width / 2 - 60, 30);
+
+    // Game Over Screen
+    if (gameOver) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "white";
+        ctx.font = "40px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(gameOver === "win" ? "🎉 YOU WIN! 🎉" : "😞 YOU LOSE! 😞", canvas.width / 2, canvas.height / 2 - 20);
+        ctx.font = "20px Arial";
+        ctx.fillText("Press SPACEBAR to restart", canvas.width / 2, canvas.height / 2 + 40);
+    }
 }
 
 // Move ball and paddles
@@ -75,24 +91,37 @@ function move() {
         ballSpeedY *= -1;
     }
 
-    // Ball collision with paddles
+    // Ball collision with paddles + Paddle Speed Impact
+    let playerPaddleSpeed = playerY - lastPlayerY;
+    lastPlayerY = playerY;
+
     if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
-        ballSpeedX *= -1;
+        ballSpeedX = Math.abs(ballSpeedX); // Ensure ball moves right
+        ballSpeedY += playerPaddleSpeed * 0.5; // Paddle movement influences ball angle
     }
     if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight) {
-        ballSpeedX *= -1;
+        ballSpeedX = -Math.abs(ballSpeedX); // Ensure ball moves left
     }
+
+    // Fix Ball Stuck Behind Paddle
+    if (ballX - ballRadius < 0) ballX = ballRadius;
+    if (ballX + ballRadius > canvas.width) ballX = canvas.width - ballRadius;
 
     // Ball out of bounds
     if (ballX < 0) {
         aiScore++;
-        resetBall();
+        if (aiScore === maxScore) {
+            endGame("lose");
+        } else {
+            resetBall();
+        }
     } else if (ballX > canvas.width) {
         playerScore++;
         if (playerScore === maxScore) {
-            saveToLeaderboard(playerScore, aiDifficulty);
+            endGame("win");
+        } else {
+            resetBall();
         }
-        resetBall();
     }
 
     // AI follows ball
@@ -114,40 +143,28 @@ function resetBall() {
     ballSpeedY = (Math.random() * 6 - 3) * speedMultiplier;
 }
 
-// Save to leaderboard (Top 10 scores)
-function saveToLeaderboard(score, difficulty) {
-    // Temporarily remove key listeners to allow typing
-    document.removeEventListener("keydown", handleKeydown);
-    document.removeEventListener("keyup", handleKeyup);
-
-    let name = prompt("You won! Enter your name:");
-    if (!name) {
-        restoreKeyListeners(); // Restore movement if name entry is canceled
-        return;
-    }
-
-    leaderboard.push({ name, score, difficulty, date: new Date().toLocaleDateString() });
-    leaderboard.sort((a, b) => b.score - a.score);
-    leaderboard = leaderboard.slice(0, 10); // Keep top 10
-    localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
-    updateLeaderboard();
-
-    restoreKeyListeners(); // Restore movement after entering name
+// End game
+function endGame(result) {
+    gameOver = result;
+    setTimeout(() => {
+        draw();
+    }, 200);
 }
 
-// Update leaderboard display
-function updateLeaderboard() {
-    const leaderboardEl = document.getElementById("leaderboard");
-    leaderboardEl.innerHTML = leaderboard.map(entry => 
-        `<li>${entry.name} - ${entry.score} (${entry.difficulty})</li>`
-    ).join("");
+// Restart game
+function restartGame() {
+    playerScore = 0;
+    aiScore = 0;
+    gameOver = false;
+    resetBall();
+    gameLoop();
 }
 
-// Handle key events (Fix movement & difficulty selection)
+// Handle key events
 function handleKeydown(event) {
     if (event.key === "ArrowUp") moveUp = true;
     if (event.key === "ArrowDown") moveDown = true;
-
+    if (event.key === " ") restartGame();
     if (event.key === "1") setDifficulty("Easy");
     if (event.key === "2") setDifficulty("Medium");
     if (event.key === "3") setDifficulty("Hard");
@@ -163,16 +180,8 @@ function handleKeyup(event) {
 function setDifficulty(level) {
     if (difficulties[level]) {
         aiDifficulty = level;
-        playerScore = 0;
-        aiScore = 0;
-        resetBall();
+        restartGame();
     }
-}
-
-// Restore key listeners after leaderboard input
-function restoreKeyListeners() {
-    document.addEventListener("keydown", handleKeydown);
-    document.addEventListener("keyup", handleKeyup);
 }
 
 // Add key listeners
