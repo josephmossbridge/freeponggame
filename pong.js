@@ -11,15 +11,15 @@ let lastPlayerY = playerY;
 
 // Ball properties
 let ballX = canvas.width / 2, ballY = canvas.height / 2;
-let baseBallSpeedX = 6.3, baseBallSpeedY = 6.3;
-let ballSpeedX = 0, ballSpeedY = 0; // Ball doesn't move until game starts
+const baseBallSpeedX = 6.3, baseBallSpeedY = 6.3; // Fixed starting speed
+let ballSpeedX = 0, ballSpeedY = 0; // Ball remains still until game starts
 let ballRadius = 8;
 
 // Score tracking
 let playerScore = 0, aiScore = 0;
 const maxScore = 5;
 let gameOver = false;
-let gameStarted = false; // Ensures game doesn't start until Spacebar is pressed
+let gameStarted = false;
 
 // AI Difficulty Levels
 const difficulties = {
@@ -28,7 +28,7 @@ const difficulties = {
     "Hard": { aiReaction: 0.8, ballSpeedMultiplier: 1.17 },
     "Insane": { aiReaction: 1.2, ballSpeedMultiplier: 1.7 }
 };
-let aiDifficulty = "Medium";
+let aiDifficulty = "Medium"; // Default difficulty
 
 // Player movement tracking
 let moveUp = false, moveDown = false;
@@ -149,6 +149,14 @@ function resetBall() {
     ballSpeedY = (Math.random() * 6 - 3) * speedMultiplier;
 }
 
+// Change difficulty and reset game
+function setDifficulty(level) {
+    if (difficulties[level]) {
+        aiDifficulty = level;
+        resetGame(); // Reset game without increasing speed
+    }
+}
+
 // End game
 function endGame(result) {
     gameOver = result;
@@ -157,13 +165,12 @@ function endGame(result) {
 }
 
 // Restart game
-function restartGame() {
+function resetGame() {
     playerScore = 0;
     aiScore = 0;
     gameOver = false;
     gameStarted = true;
     resetBall();
-    gameLoop();
 }
 
 // Handle key events
@@ -172,11 +179,10 @@ function handleKeydown(event) {
     if (event.key === "ArrowDown") moveDown = true;
     if (event.key === " " && !gameStarted) {
         gameStarted = true;
-        ballSpeedX = baseBallSpeedX; // Start ball movement
-        ballSpeedY = baseBallSpeedY;
+        resetBall();
         gameLoop();
     }
-    if (event.key === " " && gameOver) restartGame();
+    if (event.key === " " && gameOver) resetGame();
     if (event.key === "1") setDifficulty("Easy");
     if (event.key === "2") setDifficulty("Medium");
     if (event.key === "3") setDifficulty("Hard");
