@@ -6,7 +6,7 @@ const ctx = canvas.getContext("2d");
 const paddleWidth = 10, paddleHeight = 80;
 let playerY = canvas.height / 2 - paddleHeight / 2;
 let aiY = playerY;
-const paddleSpeed = 8;
+const playerSpeed = 6; // Reduced speed for smoother control
 
 // Ball properties
 let ballX = canvas.width / 2, ballY = canvas.height / 2;
@@ -57,8 +57,18 @@ function draw() {
     ctx.fillText(`Player: ${playerScore}`, 20, 30);
     ctx.fillText(`AI: ${aiScore}`, canvas.width - 100, 30);
     
-    // Draw difficulty selection
+    // Draw difficulty setting
     ctx.fillText(`Difficulty: ${aiDifficulty}`, canvas.width / 2 - 60, 30);
+
+    // Draw control key display on the right side
+    ctx.font = "16px Arial";
+    ctx.fillText("Controls:", canvas.width - 150, 80);
+    ctx.fillText("Arrow Up: Move Up", canvas.width - 150, 110);
+    ctx.fillText("Arrow Down: Move Down", canvas.width - 150, 130);
+    ctx.fillText("1 - Easy", canvas.width - 150, 160);
+    ctx.fillText("2 - Medium", canvas.width - 150, 180);
+    ctx.fillText("3 - Hard", canvas.width - 150, 200);
+    ctx.fillText("4 - Insane", canvas.width - 150, 220);
 }
 
 // Move ball and paddles
@@ -94,12 +104,12 @@ function move() {
 
     // AI follows ball based on difficulty
     let aiReactionSpeed = difficulties[aiDifficulty]; // Use selected difficulty
-    if (aiY + paddleHeight / 2 < ballY - 10) aiY += paddleSpeed * aiReactionSpeed;
-    else if (aiY + paddleHeight / 2 > ballY + 10) aiY -= paddleSpeed * aiReactionSpeed;
+    if (aiY + paddleHeight / 2 < ballY - 10) aiY += playerSpeed * aiReactionSpeed;
+    else if (aiY + paddleHeight / 2 > ballY + 10) aiY -= playerSpeed * aiReactionSpeed;
 
     // Player movement
-    if (moveUp && playerY > 0) playerY -= paddleSpeed;
-    if (moveDown && playerY < canvas.height - paddleHeight) playerY += paddleSpeed;
+    if (moveUp && playerY > 0) playerY -= playerSpeed;
+    if (moveDown && playerY < canvas.height - paddleHeight) playerY += playerSpeed;
 }
 
 // Reset ball after a point
