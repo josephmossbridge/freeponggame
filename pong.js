@@ -110,6 +110,15 @@ function move() {
         ballSpeedX = -Math.abs(ballSpeedX);
     }
 
+    // Function to save score to Firebase
+function saveToLeaderboard(score, difficulty) {
+    let playerName = prompt("You won! Enter your name:");
+    if (!playerName) return;
+
+    submitScore(playerName, score, difficulty); // Send to Firebase
+    loadLeaderboard(); // Refresh leaderboard
+}
+
     // Check for scoring (Ball hits the wall behind a paddle)
     if (ballX - ballRadius < 0) {
         aiScore++;
@@ -118,14 +127,15 @@ function move() {
         } else {
             resetBall();
         }
-    } else if (ballX + ballRadius > canvas.width) {
-        playerScore++;
-        if (playerScore === maxScore) {
-            endGame("win");
-        } else {
-            resetBall();
-        }
+else if (ballX + ballRadius > canvas.width) {
+    playerScore++;
+    if (playerScore === maxScore) {
+        saveToLeaderboard(playerScore, aiDifficulty); // Save score to Firebase
+        endGame("win");
+    } else {
+        resetBall();
     }
+}
 
     // AI follows ball
     let aiReactionSpeed = difficulties[aiDifficulty].aiReaction;
