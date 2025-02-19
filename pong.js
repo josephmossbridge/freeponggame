@@ -6,8 +6,8 @@ const ctx = canvas.getContext("2d");
 const paddleWidth = 10, paddleHeight = 80;
 let playerY = canvas.height / 2 - paddleHeight / 2;
 let aiY = playerY;
-const playerSpeed = 5; // Smooth player movement
-let lastPlayerY = playerY; // Track previous Y position for physics
+const playerSpeed = 5;
+let lastPlayerY = playerY; 
 
 // Ball properties
 let ballX = canvas.width / 2, ballY = canvas.height / 2;
@@ -17,8 +17,9 @@ let ballRadius = 8;
 
 // Score tracking
 let playerScore = 0, aiScore = 0;
-const maxScore = 5; // First to 5 wins
-let gameOver = false; // Track if game has ended
+const maxScore = 5;
+let gameOver = false;
+let gameStarted = false; // Track if game has started
 
 // AI Difficulty Levels
 const difficulties = {
@@ -27,7 +28,7 @@ const difficulties = {
     "Hard": { aiReaction: 0.8, ballSpeedMultiplier: 1.17 },
     "Insane": { aiReaction: 1.2, ballSpeedMultiplier: 1.7 }
 };
-let aiDifficulty = "Medium"; // Default difficulty
+let aiDifficulty = "Medium";
 
 // Player movement tracking
 let moveUp = false, moveDown = false;
@@ -48,6 +49,15 @@ function gameLoop() {
 function draw() {
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Show Start Screen if Game Hasn't Started
+    if (!gameStarted) {
+        ctx.fillStyle = "white";
+        ctx.font = "30px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Press SPACEBAR to Start", canvas.width / 2, canvas.height / 2);
+        return;
+    }
 
     // Draw paddles
     ctx.fillStyle = "white";
@@ -74,10 +84,9 @@ function draw() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "white";
         ctx.font = "40px Arial";
-        ctx.textAlign = "center";
         ctx.fillText(gameOver === "win" ? "🎉 YOU WIN! 🎉" : "😞 YOU LOSE! 😞", canvas.width / 2, canvas.height / 2 - 20);
         ctx.font = "20px Arial";
-        ctx.fillText("Press SPACEBAR to restart", canvas.width / 2, canvas.height / 2 + 40);
+        ctx.fillText("Press SPACEBAR to Restart", canvas.width / 2, canvas.height / 2 + 40);
     }
 }
 
@@ -96,11 +105,11 @@ function move() {
     lastPlayerY = playerY;
 
     if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
-        ballSpeedX = Math.abs(ballSpeedX); // Ensure ball moves right
-        ballSpeedY += playerPaddleSpeed * 0.5; // Paddle movement influences ball angle
+        ballSpeedX = Math.abs(ballSpeedX);
+        ballSpeedY += playerPaddleSpeed * 0.5;
     }
     if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight) {
-        ballSpeedX = -Math.abs(ballSpeedX); // Ensure ball moves left
+        ballSpeedX = -Math.abs(ballSpeedX);
     }
 
     // Fix Ball Stuck Behind Paddle
@@ -156,6 +165,7 @@ function restartGame() {
     playerScore = 0;
     aiScore = 0;
     gameOver = false;
+    gameStarted = true; // Game starts after first Spacebar press
     resetBall();
     gameLoop();
 }
@@ -164,7 +174,8 @@ function restartGame() {
 function handleKeydown(event) {
     if (event.key === "ArrowUp") moveUp = true;
     if (event.key === "ArrowDown") moveDown = true;
-    if (event.key === " ") restartGame();
+    if (event.key === " " && !gameStarted) restartGame(); // Start game on first press
+    if (event.key === " " && gameOver) restartGame();
     if (event.key === "1") setDifficulty("Easy");
     if (event.key === "2") setDifficulty("Medium");
     if (event.key === "3") setDifficulty("Hard");
@@ -176,14 +187,6 @@ function handleKeyup(event) {
     if (event.key === "ArrowDown") moveDown = false;
 }
 
-// Change AI difficulty (and reset game)
-function setDifficulty(level) {
-    if (difficulties[level]) {
-        aiDifficulty = level;
-        restartGame();
-    }
-}
-
 // Add key listeners
 document.addEventListener("keydown", handleKeydown);
 document.addEventListener("keyup", handleKeyup);
@@ -191,5 +194,5 @@ document.addEventListener("keyup", handleKeyup);
 // Load leaderboard on page load
 updateLeaderboard();
 
-// Start game loop
-gameLoop();
+// Draw the start screen
+draw();
