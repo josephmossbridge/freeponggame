@@ -6,23 +6,27 @@ const ctx = canvas.getContext("2d");
 const paddleWidth = 10, paddleHeight = 80;
 let playerY = canvas.height / 2 - paddleHeight / 2;
 let aiY = playerY;
-const playerSpeed = 5; // Reduced for smoother control
+const playerSpeed = 5; // Smooth player movement
 
-// Ball properties
+// Ball properties (baseline speed)
 let ballX = canvas.width / 2, ballY = canvas.height / 2;
-let ballSpeedX = 4, ballSpeedY = 4, ballRadius = 8;
+let baseBallSpeedX = 7; // Faster baseline speed
+let baseBallSpeedY = 7;
+let ballSpeedX = baseBallSpeedX;
+let ballSpeedY = baseBallSpeedY;
+let ballRadius = 8;
 
 // Score tracking
 let playerScore = 0;
 let aiScore = 0;
 const maxScore = 5; // First to 5 wins
 
-// AI Difficulty Levels
+// AI Difficulty Levels (affects ball speed and AI reaction)
 const difficulties = {
-    "Easy": 0.4,   // Slow reaction
-    "Medium": 0.6, // Normal challenge
-    "Hard": 0.8,   // Tough but beatable
-    "Insane": 1.2  // Near perfect AI
+    "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.8 },  // Slower ball
+    "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 }, // Normal speed
+    "Hard": { aiReaction: 0.8, ballSpeedMultiplier: 1.3 },   // Faster ball
+    "Insane": { aiReaction: 1.2, ballSpeedMultiplier: 1.7 }  // Very fast ball
 };
 let aiDifficulty = "Medium"; // Default difficulty
 
@@ -33,7 +37,7 @@ let moveUp = false, moveDown = false;
 function gameLoop() {
     move();
     draw();
-    setTimeout(() => requestAnimationFrame(gameLoop), 1000 / 60); // Smooth 60 FPS
+    requestAnimationFrame(gameLoop);
 }
 
 // Draw game elements
@@ -75,12 +79,12 @@ function move() {
     if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
         ballSpeedX *= -1;
         let hitPosition = (ballY - (playerY + paddleHeight / 2)) / (paddleHeight / 2);
-        ballSpeedY = hitPosition * 5; // Adjust angle based on hit position
+        ballSpeedY = hitPosition * 6; // Adjust angle based on hit position
     }
     if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight) {
         ballSpeedX *= -1;
         let hitPosition = (ballY - (aiY + paddleHeight / 2)) / (paddleHeight / 2);
-        ballSpeedY = hitPosition * 5;
+        ballSpeedY = hitPosition * 6;
     }
 
     // Ball out of bounds (reset round)
@@ -93,7 +97,7 @@ function move() {
     }
 
     // AI follows ball based on difficulty
-    let aiReactionSpeed = difficulties[aiDifficulty]; // Use selected difficulty
+    let aiReactionSpeed = difficulties[aiDifficulty].aiReaction;
     if (aiY + paddleHeight / 2 < ballY - 10) aiY += playerSpeed * aiReactionSpeed;
     else if (aiY + paddleHeight / 2 > ballY + 10) aiY -= playerSpeed * aiReactionSpeed;
 
@@ -104,13 +108,14 @@ function move() {
 
 // Reset ball after a point
 function resetBall() {
+    let speedMultiplier = difficulties[aiDifficulty].ballSpeedMultiplier;
     ballX = canvas.width / 2;
     ballY = canvas.height / 2;
-    ballSpeedX = Math.random() > 0.5 ? 4 : -4;
-    ballSpeedY = Math.random() * 4 - 2;
+    ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * baseBallSpeedX * speedMultiplier;
+    ballSpeedY = (Math.random() * 6 - 3) * speedMultiplier;
 }
 
-// Change AI difficulty
+// Change AI difficulty (updates ball speed too)
 function changeDifficulty(level) {
     if (difficulties[level]) {
         aiDifficulty = level;
