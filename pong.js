@@ -17,8 +17,14 @@ let playerScore = 0;
 let aiScore = 0;
 const maxScore = 5; // First to 5 wins
 
-// AI Difficulty (0 = Easy, 1 = Medium, 2 = Hard)
-let aiDifficulty = 1;
+// AI Difficulty Levels
+const difficulties = {
+    "Easy": 0.4,   // Slow reaction
+    "Medium": 0.6, // Normal challenge
+    "Hard": 0.8,   // Tough but beatable
+    "Insane": 1.2  // Near perfect AI
+};
+let aiDifficulty = "Medium"; // Default difficulty
 
 // Player movement tracking
 let moveUp = false, moveDown = false;
@@ -50,6 +56,9 @@ function draw() {
     ctx.font = "20px Arial";
     ctx.fillText(`Player: ${playerScore}`, 20, 30);
     ctx.fillText(`AI: ${aiScore}`, canvas.width - 100, 30);
+    
+    // Draw difficulty selection
+    ctx.fillText(`Difficulty: ${aiDifficulty}`, canvas.width / 2 - 60, 30);
 }
 
 // Move ball and paddles
@@ -84,7 +93,7 @@ function move() {
     }
 
     // AI follows ball based on difficulty
-    let aiReactionSpeed = aiDifficulty === 0 ? 0.4 : aiDifficulty === 1 ? 0.6 : 0.8;
+    let aiReactionSpeed = difficulties[aiDifficulty]; // Use selected difficulty
     if (aiY + paddleHeight / 2 < ballY - 10) aiY += paddleSpeed * aiReactionSpeed;
     else if (aiY + paddleHeight / 2 > ballY + 10) aiY -= paddleSpeed * aiReactionSpeed;
 
@@ -101,6 +110,14 @@ function resetBall() {
     ballSpeedY = Math.random() * 4 - 2;
 }
 
+// Change AI difficulty
+function changeDifficulty(level) {
+    if (difficulties[level]) {
+        aiDifficulty = level;
+        resetBall(); // Reset game when changing difficulty
+    }
+}
+
 // Listen for key presses
 document.addEventListener("keydown", (event) => {
     if (event.key === "ArrowUp") moveUp = true;
@@ -109,6 +126,14 @@ document.addEventListener("keydown", (event) => {
 document.addEventListener("keyup", (event) => {
     if (event.key === "ArrowUp") moveUp = false;
     if (event.key === "ArrowDown") moveDown = false;
+});
+
+// Listen for difficulty selection (1-4)
+document.addEventListener("keydown", (event) => {
+    if (event.key === "1") changeDifficulty("Easy");
+    if (event.key === "2") changeDifficulty("Medium");
+    if (event.key === "3") changeDifficulty("Hard");
+    if (event.key === "4") changeDifficulty("Insane");
 });
 
 // Start game loop
