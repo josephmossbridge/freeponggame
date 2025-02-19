@@ -19,7 +19,7 @@ let ballRadius = 8;
 let playerScore = 0, aiScore = 0;
 const maxScore = 5;
 let gameOver = false;
-let gameStarted = false; // Track if game has started
+let gameStarted = false;
 
 // AI Difficulty Levels
 const difficulties = {
@@ -95,9 +95,10 @@ function move() {
     ballX += ballSpeedX;
     ballY += ballSpeedY;
 
-    // Ball collision with top/bottom
+    // Ball collision with top/bottom (Now bounces at an angle)
     if (ballY - ballRadius < 0 || ballY + ballRadius > canvas.height) {
-        ballSpeedY *= -1;
+        ballSpeedY *= -1; // Reverse Y direction
+        ballSpeedX *= 1.1; // Add slight horizontal velocity for a more natural bounce
     }
 
     // Ball collision with paddles + Paddle Speed Impact
@@ -106,25 +107,21 @@ function move() {
 
     if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
         ballSpeedX = Math.abs(ballSpeedX);
-        ballSpeedY += playerPaddleSpeed * 0.5;
+        ballSpeedY += playerPaddleSpeed * 0.5; // Paddle movement affects bounce angle
     }
     if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight) {
         ballSpeedX = -Math.abs(ballSpeedX);
     }
 
-    // Fix Ball Stuck Behind Paddle
-    if (ballX - ballRadius < 0) ballX = ballRadius;
-    if (ballX + ballRadius > canvas.width) ballX = canvas.width - ballRadius;
-
-    // Ball out of bounds
-    if (ballX < 0) {
+    // Check for scoring (Ball hits the wall behind a paddle)
+    if (ballX - ballRadius < 0) {
         aiScore++;
         if (aiScore === maxScore) {
             endGame("lose");
         } else {
             resetBall();
         }
-    } else if (ballX > canvas.width) {
+    } else if (ballX + ballRadius > canvas.width) {
         playerScore++;
         if (playerScore === maxScore) {
             endGame("win");
@@ -165,7 +162,7 @@ function restartGame() {
     playerScore = 0;
     aiScore = 0;
     gameOver = false;
-    gameStarted = true; // Game starts after first Spacebar press
+    gameStarted = true;
     resetBall();
     gameLoop();
 }
@@ -174,7 +171,10 @@ function restartGame() {
 function handleKeydown(event) {
     if (event.key === "ArrowUp") moveUp = true;
     if (event.key === "ArrowDown") moveDown = true;
-    if (event.key === " " && !gameStarted) restartGame(); // Start game on first press
+    if (event.key === " " && !gameStarted) {
+        gameStarted = true;
+        restartGame();
+    }
     if (event.key === " " && gameOver) restartGame();
     if (event.key === "1") setDifficulty("Easy");
     if (event.key === "2") setDifficulty("Medium");
