@@ -7,12 +7,12 @@ const paddleWidth = 10, paddleHeight = 80;
 let playerY = canvas.height / 2 - paddleHeight / 2;
 let aiY = playerY;
 const playerSpeed = 5;
-let lastPlayerY = playerY;
+let lastPlayerY = playerY; // To track paddle movement speed
 
 // Ball properties
 let ballX = canvas.width / 2, ballY = canvas.height / 2;
-const baseBallSpeedX = 6.3, baseBallSpeedY = 6.3; // Fixed starting speed
-let ballSpeedX = 0, ballSpeedY = 0; // Ball remains still until game starts
+const baseBallSpeedX = 6.3, baseBallSpeedY = 6.3; // Fixed starting speeds
+let ballSpeedX = 0, ballSpeedY = 0; // Ball stays still until game starts
 let ballRadius = 8;
 
 // Score tracking
@@ -44,10 +44,11 @@ function gameLoop() {
 
 // Draw game elements
 function draw() {
+    // Clear canvas
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Show Start Screen if Game Hasn't Started
+    // If game hasn't started, show start message and exit draw
     if (!gameStarted) {
         ctx.fillStyle = "white";
         ctx.font = "30px Arial";
@@ -69,15 +70,18 @@ function draw() {
     // Draw scores
     ctx.fillStyle = "white";
     ctx.font = "20px Arial";
+    ctx.textAlign = "left";
     ctx.fillText(`Player: ${playerScore}`, 20, 30);
-    ctx.fillText(`AI: ${aiScore}`, canvas.width - 100, 30);
+    ctx.textAlign = "right";
+    ctx.fillText(`AI: ${aiScore}`, canvas.width - 20, 30);
 
     // Draw difficulty setting
-    ctx.fillText(`Difficulty: ${aiDifficulty}`, canvas.width / 2 - 60, 30);
+    ctx.textAlign = "center";
+    ctx.fillText(`Difficulty: ${aiDifficulty}`, canvas.width / 2, 30);
 
-    // Game Over Screen
+    // If game over, display win/lose message
     if (gameOver) {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+        ctx.fillStyle = "rgba(0,0,0,0.8)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "white";
         ctx.font = "40px Arial";
@@ -92,34 +96,27 @@ function move() {
     ballX += ballSpeedX;
     ballY += ballSpeedY;
 
-    // Ball collision with top/bottom (Now bounces at an angle)
+    // Ball collision with top/bottom: reverse Y and add a slight horizontal boost
     if (ballY - ballRadius < 0 || ballY + ballRadius > canvas.height) {
-        ballSpeedY *= -1; // Reverse Y direction
-        ballSpeedX *= 1.1; // Add slight horizontal velocity for a more natural bounce
+        ballSpeedY *= -1;
+        ballSpeedX *= 1.1;
     }
 
-    // Ball collision with paddles + Paddle Speed Impact
+    // Calculate player's paddle speed (to impact ball bounce)
     let playerPaddleSpeed = playerY - lastPlayerY;
     lastPlayerY = playerY;
 
+    // Ball collision with player's paddle
     if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
-        ballSpeedX = Math.abs(ballSpeedX);
-        ballSpeedY += playerPaddleSpeed * 0.5;
+        ballSpeedX = Math.abs(ballSpeedX); // Ensure ball goes right
+        ballSpeedY += playerPaddleSpeed * 0.5; // Add paddle speed impact
     }
+    // Ball collision with AI paddle
     if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight) {
-        ballSpeedX = -Math.abs(ballSpeedX);
+        ballSpeedX = -Math.abs(ballSpeedX); // Ensure ball goes left
     }
 
-    // Function to save score to Firebase
-function saveToLeaderboard(score, difficulty) {
-    let playerName = prompt("You won! Enter your name:");
-    if (!playerName) return;
-
-    submitScore(playerName, score, difficulty); // Send to Firebase
-    loadLeaderboard(); // Refresh leaderboard
-}
-
-    // Check for scoring (Ball hits the wall behind a paddle)
+    // Check for scoring (ball goes offscreen behind a paddle)
     if (ballX - ballRadius < 0) {
         aiScore++;
         if (aiScore === maxScore) {
@@ -127,27 +124,34 @@ function saveToLeaderboard(score, difficulty) {
         } else {
             resetBall();
         }
-else if (ballX + ballRadius > canvas.width) {
-    playerScore++;
-    if (playerScore === maxScore) {
-        saveToLeaderboard(playerScore, aiDifficulty); // Save score to Firebase
-        endGame("win");
-    } else {
-        resetBall();
+    } else if (ballX + ballRadius > canvas.width) {
+        playerScore++;
+        if (playerScore === maxScore) {
+            saveToLeaderboard(playerScore, aiDifficulty); // Save score to Firebase
+            endGame("win");
+        } else {
+            resetBall();
+        }
+    }
+
+    // AI paddle follows the ball
+    let aiReactionSpeed = difficulties[aiDifficulty].aiReaction;
+    if (aiY + paddleHeight / 2 < ballY - 10) {
+        aiY += playerSpeed * aiReactionSpeed;
+    } else if (aiY + paddleHeight / 2 > ballY + 10) {
+        aiY -= playerSpeed * aiReactionSpeed;
+    }
+
+    // Player paddle movement
+    if (moveUp && playerY > 0) {
+        playerY -= playerSpeed;
+    }
+    if (moveDown && playerY < canvas.height - paddleHeight) {
+        playerY += playerSpeed;
     }
 }
 
-    // AI follows ball
-    let aiReactionSpeed = difficulties[aiDifficulty].aiReaction;
-    if (aiY + paddleHeight / 2 < ballY - 10) aiY += playerSpeed * aiReactionSpeed;
-    else if (aiY + paddleHeight / 2 > ballY + 10) aiY -= playerSpeed * aiReactionSpeed;
-
-    // Player movement
-    if (moveUp && playerY > 0) playerY -= playerSpeed;
-    if (moveDown && playerY < canvas.height - paddleHeight) playerY += playerSpeed;
-}
-
-// Reset ball
+// Reset the ball to the center with fixed base speeds
 function resetBall() {
     let speedMultiplier = difficulties[aiDifficulty].ballSpeedMultiplier;
     ballX = canvas.width / 2;
@@ -156,22 +160,30 @@ function resetBall() {
     ballSpeedY = (Math.random() * 6 - 3) * speedMultiplier;
 }
 
-// Change difficulty and reset game
+// Function to save score to Firebase (calls functions defined in index.html)
+function saveToLeaderboard(score, difficulty) {
+    let playerName = prompt("You won! Enter your name:");
+    if (!playerName) return;
+    submitScore(playerName, score, difficulty); // Defined in index.html Firebase script
+    loadLeaderboard(); // Defined in index.html Firebase script
+}
+
+// Change difficulty and reset the game without cumulative speed increase
 function setDifficulty(level) {
     if (difficulties[level]) {
         aiDifficulty = level;
-        resetGame(); // Reset game without increasing speed
+        resetGame();
     }
 }
 
-// End game
+// End the game: stop ball movement and mark game over
 function endGame(result) {
     gameOver = result;
     ballSpeedX = 0;
     ballSpeedY = 0;
 }
 
-// Restart game
+// Reset game state for a new game
 function resetGame() {
     playerScore = 0;
     aiScore = 0;
@@ -205,8 +217,8 @@ function handleKeyup(event) {
 document.addEventListener("keydown", handleKeydown);
 document.addEventListener("keyup", handleKeyup);
 
-// Load leaderboard on page load
+// Load leaderboard on page load (Assumes updateLeaderboard is defined in index.html)
 updateLeaderboard();
 
-// Draw the start screen
+// Draw the initial start screen
 draw();
