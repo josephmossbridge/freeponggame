@@ -33,9 +33,6 @@ let aiDifficulty = "Medium"; // Default difficulty
 // Player movement tracking
 let moveUp = false, moveDown = false;
 
-// Leaderboard (top 10 scores)
-let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
-
 // Game loop
 function gameLoop() {
     if (!gameOver && gameStarted) {
