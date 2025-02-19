@@ -143,19 +143,30 @@ function updateLeaderboard() {
     ).join("");
 }
 
-// Handle key events (Fix movement issue)
+// Handle key events (Fix movement & difficulty selection)
 function handleKeydown(event) {
     if (event.key === "ArrowUp") moveUp = true;
     if (event.key === "ArrowDown") moveDown = true;
-    if (event.key === "1") changeDifficulty("Easy");
-    if (event.key === "2") changeDifficulty("Medium");
-    if (event.key === "3") changeDifficulty("Hard");
-    if (event.key === "4") changeDifficulty("Insane");
+
+    if (event.key === "1") setDifficulty("Easy");
+    if (event.key === "2") setDifficulty("Medium");
+    if (event.key === "3") setDifficulty("Hard");
+    if (event.key === "4") setDifficulty("Insane");
 }
 
 function handleKeyup(event) {
     if (event.key === "ArrowUp") moveUp = false;
     if (event.key === "ArrowDown") moveDown = false;
+}
+
+// Change AI difficulty (and reset game)
+function setDifficulty(level) {
+    if (difficulties[level]) {
+        aiDifficulty = level;
+        playerScore = 0;
+        aiScore = 0;
+        resetBall();
+    }
 }
 
 // Restore key listeners after leaderboard input
