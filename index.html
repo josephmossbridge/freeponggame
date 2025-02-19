@@ -71,6 +71,60 @@
             }
         });
     </script>
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+  // 🔹 Paste your Firebase config here:
+  const firebaseConfig = {
+       apiKey: "AIzaSyB-GLAmArdzA_1DVIAX8yKXxFkw7Wwa5dQ",
+       authDomain: "pong-leaderboard-79ba7.firebaseapp.com",
+       databaseURL: "https://pong-leaderboard-79ba7-default-rtdb.firebaseio.com",
+       projectId: "pong-leaderboard-79ba7",
+       storageBucket: "pong-leaderboard-79ba7.appspot.com",
+       messagingSenderId: "534728216752",
+       appId: "1:534728216752:web:e65fa43523182b67aeb75",
+       measurementId: "G-K5PE33HMPF"
+  };
+
+  // 🔹 Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+
+  // 🔹 Function to Submit Score
+  function submitScore(playerName, score, difficulty) {
+    const scoresRef = ref(database, 'leaderboard/' + Date.now());
+    set(scoresRef, {
+      name: playerName,
+      score: score,
+      difficulty: difficulty
+    });
+  }
+
+  // 🔹 Function to Load Leaderboard
+  function loadLeaderboard() {
+    const leaderboardRef = ref(database, 'leaderboard');
+    get(leaderboardRef).then((snapshot) => {
+      if (snapshot.exists()) {
+        const scores = Object.values(snapshot.val());
+        scores.sort((a, b) => b.score - a.score); // Sort by highest score
+        displayLeaderboard(scores);
+      }
+    });
+  }
+
+  // 🔹 Function to Display Leaderboard
+  function displayLeaderboard(scores) {
+    const leaderboardEl = document.getElementById("leaderboard");
+    leaderboardEl.innerHTML = scores.slice(0, 10).map(entry =>
+      `<li>${entry.name} - ${entry.score} (${entry.difficulty})</li>`
+    ).join("");
+  }
+
+  // 🔹 Load leaderboard on page load
+  document.addEventListener("DOMContentLoaded", loadLeaderboard);
+</script>
 
     <script src="pong.js"></script>
 </body>
