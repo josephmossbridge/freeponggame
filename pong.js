@@ -7,19 +7,19 @@ const paddleWidth = 10, paddleHeight = 80;
 let playerY = canvas.height / 2 - paddleHeight / 2;
 let aiY = playerY;
 const playerSpeed = 5;
-let lastPlayerY = playerY; 
+let lastPlayerY = playerY;
 
 // Ball properties
 let ballX = canvas.width / 2, ballY = canvas.height / 2;
 let baseBallSpeedX = 6.3, baseBallSpeedY = 6.3;
-let ballSpeedX = baseBallSpeedX, ballSpeedY = baseBallSpeedY;
+let ballSpeedX = 0, ballSpeedY = 0; // Ball doesn't move until game starts
 let ballRadius = 8;
 
 // Score tracking
 let playerScore = 0, aiScore = 0;
 const maxScore = 5;
 let gameOver = false;
-let gameStarted = false;
+let gameStarted = false; // Ensures game doesn't start until Spacebar is pressed
 
 // AI Difficulty Levels
 const difficulties = {
@@ -38,11 +38,11 @@ let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
 
 // Game loop
 function gameLoop() {
-    if (!gameOver) {
+    if (!gameOver && gameStarted) {
         move();
-        draw();
-        requestAnimationFrame(gameLoop);
     }
+    draw();
+    requestAnimationFrame(gameLoop);
 }
 
 // Draw game elements
@@ -107,7 +107,7 @@ function move() {
 
     if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
         ballSpeedX = Math.abs(ballSpeedX);
-        ballSpeedY += playerPaddleSpeed * 0.5; // Paddle movement affects bounce angle
+        ballSpeedY += playerPaddleSpeed * 0.5;
     }
     if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight) {
         ballSpeedX = -Math.abs(ballSpeedX);
@@ -152,9 +152,8 @@ function resetBall() {
 // End game
 function endGame(result) {
     gameOver = result;
-    setTimeout(() => {
-        draw();
-    }, 200);
+    ballSpeedX = 0;
+    ballSpeedY = 0;
 }
 
 // Restart game
@@ -173,7 +172,9 @@ function handleKeydown(event) {
     if (event.key === "ArrowDown") moveDown = true;
     if (event.key === " " && !gameStarted) {
         gameStarted = true;
-        restartGame();
+        ballSpeedX = baseBallSpeedX; // Start ball movement
+        ballSpeedY = baseBallSpeedY;
+        gameLoop();
     }
     if (event.key === " " && gameOver) restartGame();
     if (event.key === "1") setDifficulty("Easy");
