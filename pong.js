@@ -6,7 +6,7 @@ const ctx = canvas.getContext("2d");
 const paddleWidth = 10, paddleHeight = 80;
 let playerY = canvas.height / 2 - paddleHeight / 2;
 let aiY = playerY;
-const playerSpeed = 6; // Reduced speed for smoother control
+const playerSpeed = 5; // Reduced for smoother control
 
 // Ball properties
 let ballX = canvas.width / 2, ballY = canvas.height / 2;
@@ -33,7 +33,7 @@ let moveUp = false, moveDown = false;
 function gameLoop() {
     move();
     draw();
-    requestAnimationFrame(gameLoop);
+    setTimeout(() => requestAnimationFrame(gameLoop), 1000 / 60); // Smooth 60 FPS
 }
 
 // Draw game elements
@@ -59,16 +59,6 @@ function draw() {
     
     // Draw difficulty setting
     ctx.fillText(`Difficulty: ${aiDifficulty}`, canvas.width / 2 - 60, 30);
-
-    // Draw control key display on the right side
-    ctx.font = "16px Arial";
-    ctx.fillText("Controls:", canvas.width - 150, 80);
-    ctx.fillText("Arrow Up: Move Up", canvas.width - 150, 110);
-    ctx.fillText("Arrow Down: Move Down", canvas.width - 150, 130);
-    ctx.fillText("1 - Easy", canvas.width - 150, 160);
-    ctx.fillText("2 - Medium", canvas.width - 150, 180);
-    ctx.fillText("3 - Hard", canvas.width - 150, 200);
-    ctx.fillText("4 - Insane", canvas.width - 150, 220);
 }
 
 // Move ball and paddles
