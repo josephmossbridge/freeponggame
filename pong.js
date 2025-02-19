@@ -30,7 +30,7 @@ let aiDifficulty = "Medium"; // Default difficulty
 // Player movement tracking
 let moveUp = false, moveDown = false;
 
-// Leaderboard
+// Leaderboard (top 10 scores)
 let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
 
 // Game loop
@@ -72,4 +72,70 @@ function move() {
 
     // Ball collision with top/bottom
     if (ballY - ballRadius < 0 || ballY + ballRadius > canvas.height) {
-        ball
+        ballSpeedY *= -1;
+    }
+
+    // Ball collision with paddles
+    if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
+        ballSpeedX *= -1;
+    }
+    if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight) {
+        ballSpeedX *= -1;
+    }
+
+    // Ball out of bounds
+    if (ballX < 0) {
+        aiScore++;
+        resetBall();
+    } else if (ballX > canvas.width) {
+        playerScore++;
+        if (playerScore === maxScore) {
+            saveToLeaderboard(playerScore, aiDifficulty);
+        }
+        resetBall();
+    }
+
+    // AI follows ball
+    let aiReactionSpeed = difficulties[aiDifficulty].aiReaction;
+    if (aiY + paddleHeight / 2 < ballY - 10) aiY += playerSpeed * aiReactionSpeed;
+    else if (aiY + paddleHeight / 2 > ballY + 10) aiY -= playerSpeed * aiReactionSpeed;
+
+    // Player movement
+    if (moveUp && playerY > 0) playerY -= playerSpeed;
+    if (moveDown && playerY < canvas.height - paddleHeight) playerY += playerSpeed;
+}
+
+// Reset ball
+function resetBall() {
+    let speedMultiplier = difficulties[aiDifficulty].ballSpeedMultiplier;
+    ballX = canvas.width / 2;
+    ballY = canvas.height / 2;
+    ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * baseBallSpeedX * speedMultiplier;
+    ballSpeedY = (Math.random() * 6 - 3) * speedMultiplier;
+}
+
+// Save to leaderboard (Top 10 scores)
+function saveToLeaderboard(score, difficulty) {
+    let name = prompt("You won! Enter your name:");
+    if (!name) return;
+
+    leaderboard.push({ name, score, difficulty, date: new Date().toLocaleDateString() });
+    leaderboard.sort((a, b) => b.score - a.score);
+    leaderboard = leaderboard.slice(0, 10); // Keep top 10
+    localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
+    updateLeaderboard();
+}
+
+// Update leaderboard display
+function updateLeaderboard() {
+    const leaderboardEl = document.getElementById("leaderboard");
+    leaderboardEl.innerHTML = leaderboard.map(entry => 
+        `<li>${entry.name} - ${entry.score} (${entry.difficulty})</li>`
+    ).join("");
+}
+
+// Load leaderboard on page load
+updateLeaderboard();
+
+// Start game loop
+gameLoop();
