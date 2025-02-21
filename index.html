@@ -19,7 +19,6 @@
       background: #222;
       max-width: 200px;
     }
-    ul { padding: 0; list-style: none; }
     #startMessage {
       position: absolute;
       top: 50%;
@@ -37,7 +36,7 @@
 
   <!-- SEO Optimized Paragraph -->
   <p>
-    Welcome to the <strong>best free Pong game online</strong>! Challenge an advanced AI in this <strong>classic arcade game</strong> with enhanced physics, multiple difficulty levels, and a real-time leaderboard. Whether you're a casual gamer or a Pong pro, you'll love the smooth gameplay and competitive AI. Play now and see if you can top the leaderboard!
+    Welcome to the <strong>best free Pong game online</strong>! Challenge an advanced AI in this <strong>classic arcade game</strong> with enhanced physics and multiple difficulty levels. Whether you're a casual gamer or a Pong pro, you'll love the smooth gameplay and competitive AI. Play now and have fun!
   </p>
 
   <!-- Start Message -->
@@ -46,30 +45,23 @@
   <div class="container">
     <canvas id="gameCanvas" width="800" height="400"></canvas>
 
-    <div>
-      <div class="info-box">
-        <h3>Controls</h3>
-        <p>⬆️ Arrow Up: Move Up</p>
-        <p>⬇️ Arrow Down: Move Down</p>
-        <h3>Difficulty</h3>
-        <p>1️⃣ Press 1 - Easy</p>
-        <p>2️⃣ Press 2 - Medium</p>
-        <p>3️⃣ Press 3 - Hard</p>
-        <p>4️⃣ Press 4 - Insane</p>
-        <p>5️⃣ Press 5 - Ultra Insane</p>
-        <p>6️⃣ Press 6 - Insaniest</p>
-        <p>7️⃣ Press 7 - Big Ball</p>
-        <p>8️⃣ Press 8 - Trippy</p>
-      </div>
-
-      <div class="info-box">
-        <h3>Leaderboard</h3>
-        <ul id="leaderboard"></ul>
-      </div>
+    <div class="info-box">
+      <h3>Controls</h3>
+      <p>⬆️ Arrow Up: Move Up</p>
+      <p>⬇️ Arrow Down: Move Down</p>
+      <h3>Difficulty</h3>
+      <p>1️⃣ Press 1 - Easy</p>
+      <p>2️⃣ Press 2 - Medium</p>
+      <p>3️⃣ Press 3 - Hard</p>
+      <p>4️⃣ Press 4 - Insane</p>
+      <p>5️⃣ Press 5 - Ultra Insane</p>
+      <p>6️⃣ Press 6 - Insaniest</p>
+      <p>7️⃣ Press 7 - Big Ball</p>
+      <p>8️⃣ Press 8 - Trippy</p>
     </div>
   </div>
 
-  <!-- Firebase SDK (if using leaderboard functionality) -->
+  <!-- Firebase SDK (if needed for leaderboard, otherwise can be removed) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -90,7 +82,7 @@
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
 
-    // Function to submit score to Firebase
+    // Functions for leaderboard (if not using, you can remove these)
     function submitScore(playerName, score, difficulty) {
       const scoresRef = ref(database, 'leaderboard/' + Date.now());
       set(scoresRef, {
@@ -100,7 +92,6 @@
       });
     }
 
-    // Function to load leaderboard from Firebase
     function loadLeaderboard() {
       const leaderboardRef = ref(database, 'leaderboard');
       get(leaderboardRef).then((snapshot) => {
@@ -112,20 +103,14 @@
       });
     }
 
-    // Function to display leaderboard
     function displayLeaderboard(scores) {
-      const leaderboardEl = document.getElementById("leaderboard");
-      leaderboardEl.innerHTML = scores.slice(0, 10).map(entry =>
-        `<li>${entry.name} - ${entry.score} (${entry.difficulty})</li>`
-      ).join("");
+      // Leaderboard display functionality has been removed.
     }
 
-    // Expose functions globally so pong.js can call them
     window.submitScore = submitScore;
     window.loadLeaderboard = loadLeaderboard;
     window.updateLeaderboard = displayLeaderboard;
 
-    // Load leaderboard on page load
     document.addEventListener("DOMContentLoaded", loadLeaderboard);
   </script>
 
