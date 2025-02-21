@@ -143,30 +143,4 @@ function move() {
         }
     }
 
-    // AI paddle follows the ball
-    let aiReactionSpeed = difficulties[aiDifficulty].aiReaction;
-    if (aiY + paddleHeight / 2 < ballY - 10) {
-        aiY += playerSpeed * aiReactionSpeed;
-    } else if (aiY + paddleHeight / 2 > ballY + 10) {
-        aiY -= playerSpeed * aiReactionSpeed;
-    }
-
-    // Player paddle movement
-    if (moveUp && playerY > 0) {
-        playerY -= playerSpeed;
-    }
-    if (moveDown && playerY < canvas.height - paddleHeight) {
-        playerY += playerSpeed;
-    }
-}
-
-// Reset the ball to the center with fixed base speeds
-function resetBall() {
-    let speedMultiplier = difficulties[aiDifficulty].ballSpeedMultiplier;
-    ballX = canvas.width / 2;
-    ballY = canvas.height / 2;
-    ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * baseBallSpeedX * speedMultiplier;
-    ballSpeedY = (Math.random() * 6 - 3) * speedMultiplier;
-}
-
-// Function to save score to Firebase (calls fu
+    // AI p
