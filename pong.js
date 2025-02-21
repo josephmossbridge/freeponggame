@@ -21,14 +21,15 @@ const maxScore = 5;
 let gameOver = false;
 let gameStarted = false;
 
-// AI Difficulty Levels
+// AI Difficulty Levels and Modes
 const difficulties = {
     "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.72 },
     "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 0.9 },
     "Hard": { aiReaction: 0.8, ballSpeedMultiplier: 1.17 },
     "Insane": { aiReaction: 1.2, ballSpeedMultiplier: 1.7 },
     "UltraInsane": { aiReaction: 2.0, ballSpeedMultiplier: 3.0 },
-    "Insaniest": { aiReaction: 3.0, ballSpeedMultiplier: 4.5 }
+    "Insaniest": { aiReaction: 3.0, ballSpeedMultiplier: 4.5 },
+    "BigBall": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 } // Big Ball mode uses normal speed but a huge ball
 };
 let aiDifficulty = "Medium"; // Default difficulty
 
@@ -44,10 +45,10 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Draw game elements with trail effect and purple ball
+// Draw game elements with a purple trail effect and purple ball
 function draw() {
-    // Clear canvas with semi-transparent black to create a trail effect
-    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+    // Clear canvas with semi-transparent purple to create a purple trail effect
+    ctx.fillStyle = "rgba(128, 0, 128, 0.3)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // If game hasn't started, show start message and exit draw
@@ -167,16 +168,26 @@ function move() {
     }
 }
 
-// Reset the ball to the center with fixed base speeds
+// Reset the ball to the center with fixed base speeds.
+// In "BigBall" mode, the ball's radius is increased to 40.
 function resetBall() {
-    let speedMultiplier = difficulties[aiDifficulty].ballSpeedMultiplier;
-    ballX = canvas.width / 2;
-    ballY = canvas.height / 2;
-    ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * baseBallSpeedX * speedMultiplier;
-    ballSpeedY = (Math.random() * 6 - 3) * speedMultiplier;
+    if (aiDifficulty === "BigBall") {
+        ballRadius = 40;
+        ballX = canvas.width / 2;
+        ballY = canvas.height / 2;
+        ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * baseBallSpeedX;
+        ballSpeedY = (Math.random() * 6 - 3);
+    } else {
+        ballRadius = 8;
+        let speedMultiplier = difficulties[aiDifficulty].ballSpeedMultiplier;
+        ballX = canvas.width / 2;
+        ballY = canvas.height / 2;
+        ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * baseBallSpeedX * speedMultiplier;
+        ballSpeedY = (Math.random() * 6 - 3) * speedMultiplier;
+    }
 }
 
-// Change difficulty and reset the game without cumulative speed increase
+// Change difficulty (or mode) and reset the game without cumulative speed increase
 function setDifficulty(level) {
     if (difficulties[level]) {
         aiDifficulty = level;
@@ -221,7 +232,11 @@ function handleKeydown(event) {
     if (event.key === "5") setDifficulty("UltraInsane");
     if (event.key === "6") {
         console.log("Setting difficulty to Insaniest");
-        setDifficulty("Insaniest"); // Press 6 for Insaniest mode
+        setDifficulty("Insaniest");
+    }
+    if (event.key === "7" || event.key === "Numpad7") {
+        console.log("Setting mode to Big Ball");
+        setDifficulty("BigBall");
     }
 }
 
