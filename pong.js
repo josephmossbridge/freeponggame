@@ -66,7 +66,7 @@ function draw() {
     ctx.fillRect(canvas.width - 20, aiY, paddleWidth, paddleHeight);
 
     // Draw ball in purple
-    ctx.fillStyle = "purple";
+    ctx.fillStyle = "white";
     ctx.beginPath();
     ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
     ctx.fill();
