@@ -26,7 +26,8 @@ const difficulties = {
     "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.72 },
     "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 0.9 },
     "Hard": { aiReaction: 0.8, ballSpeedMultiplier: 1.17 },
-    "Insane": { aiReaction: 1.2, ballSpeedMultiplier: 1.7 }
+    "Insane": { aiReaction: 1.2, ballSpeedMultiplier: 1.7 },
+    "UltraInsane": { aiReaction: 2.0, ballSpeedMultiplier: 3.0 } // Ultra ultra fast mode
 };
 let aiDifficulty = "Medium"; // Default difficulty
 
@@ -71,13 +72,13 @@ function draw() {
     ctx.fillStyle = "white";
     ctx.font = "20px Arial";
     ctx.textAlign = "left";
-    ctx.fillText(Player: ${playerScore}, 20, 30);
+    ctx.fillText(`Player: ${playerScore}`, 20, 30);
     ctx.textAlign = "right";
-    ctx.fillText(AI: ${aiScore}, canvas.width - 20, 30);
+    ctx.fillText(`AI: ${aiScore}`, canvas.width - 20, 30);
 
     // Draw difficulty setting
     ctx.textAlign = "center";
-    ctx.fillText(Difficulty: ${aiDifficulty}, canvas.width / 2, 30);
+    ctx.fillText(`Difficulty: ${aiDifficulty}`, canvas.width / 2, 30);
 
     // If game over, display win/lose message
     if (gameOver) {
@@ -110,10 +111,18 @@ function move() {
     if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
         ballSpeedX = Math.abs(ballSpeedX); // Ensure ball goes right
         ballSpeedY += playerPaddleSpeed * 0.5; // Add paddle speed impact
+        if (aiDifficulty === "UltraInsane") {
+            ballSpeedX *= 1.2; // Extra boost in UltraInsane mode
+            ballSpeedY *= 1.2;
+        }
     }
     // Ball collision with AI paddle
     if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight) {
         ballSpeedX = -Math.abs(ballSpeedX); // Ensure ball goes left
+        if (aiDifficulty === "UltraInsane") {
+            ballSpeedX *= 1.2;
+            ballSpeedY *= 1.2;
+        }
     }
 
     // Check for scoring (ball goes offscreen behind a paddle)
@@ -127,7 +136,6 @@ function move() {
     } else if (ballX + ballRadius > canvas.width) {
         playerScore++;
         if (playerScore === maxScore) {
-            saveToLeaderboard(playerScore, aiDifficulty); // Save score to Firebase
             endGame("win");
         } else {
             resetBall();
@@ -158,14 +166,6 @@ function resetBall() {
     ballY = canvas.height / 2;
     ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * baseBallSpeedX * speedMultiplier;
     ballSpeedY = (Math.random() * 6 - 3) * speedMultiplier;
-}
-
-// Function to save score to Firebase (calls functions defined in index.html)
-function saveToLeaderboard(score, difficulty) {
-    let playerName = prompt("You won! Enter your name:");
-    if (!playerName) return;
-    submitScore(playerName, score, difficulty); // Defined in index.html Firebase script
-    loadLeaderboard(); // Defined in index.html Firebase script
 }
 
 // Change difficulty and reset the game without cumulative speed increase
@@ -206,6 +206,7 @@ function handleKeydown(event) {
     if (event.key === "2") setDifficulty("Medium");
     if (event.key === "3") setDifficulty("Hard");
     if (event.key === "4") setDifficulty("Insane");
+    if (event.key === "5") setDifficulty("UltraInsane"); // Press 5 for UltraInsane mode
 }
 
 function handleKeyup(event) {
@@ -216,9 +217,6 @@ function handleKeyup(event) {
 // Add key listeners
 document.addEventListener("keydown", handleKeydown);
 document.addEventListener("keyup", handleKeyup);
-
-// Load leaderboard on page load (Assumes updateLeaderboard is defined in index.html)
-updateLeaderboard();
 
 // Draw the initial start screen
 draw();
