@@ -24,6 +24,10 @@ let gameStarted = false;
 // Global variable for current paddle height (for trippy effects)
 let currentPaddleHeight = paddleHeight;
 
+// Variables for controlling trippy mode update frequency
+let lastTrippyUpdate = 0;
+let trippyInterval = 0; // will be set when first entering Trippy mode
+
 // Array to store extra mini balls (for Trippy mode)
 let extraBalls = [];
 
@@ -45,28 +49,23 @@ let moveUp = false, moveDown = false;
 
 // Game loop
 function gameLoop() {
-    // For Trippy mode, update extra effects each frame.
+    // For Trippy mode, update extra effects only every 1–3 seconds.
     if (aiDifficulty === "Trippy") {
-        // Randomize paddle height between 60 and 120.
-        currentPaddleHeight = 60 + Math.random() * 60;
-        // Randomize the main ball's radius between 8 and 20.
-        ballRadius = 8 + Math.random() * 12;
-        // Spawn extra mini balls with a small probability.
-        if (Math.random() < 0.1) {
-            extraBalls.push({
-                x: ballX,
-                y: ballY,
-                radius: 3 + Math.random() * 5, // radius between 3 and 8
-                vx: (Math.random() - 0.5) * 4,
-                vy: (Math.random() - 0.5) * 4,
-                alpha: 1.0
-            });
+        const now = Date.now();
+        if (!lastTrippyUpdate || now - lastTrippyUpdate >= trippyInterval) {
+            // Set extreme random paddle height between 30 and 200
+            currentPaddleHeight = 30 + Math.random() * 170;
+            // Set extreme random ball radius between 8 and 40
+            ballRadius = 8 + Math.random() * 32;
+            // Set next update interval between 1 and 3 seconds (in ms)
+            trippyInterval = 1000 + Math.random() * 2000;
+            lastTrippyUpdate = now;
         }
     } else if (aiDifficulty !== "Trippy") {
         currentPaddleHeight = paddleHeight;
     }
 
-    // Update extra balls (only used in Trippy mode)
+    // Update extra mini balls (for Trippy mode)
     updateExtraBalls();
 
     if (!gameOver && gameStarted) {
@@ -89,9 +88,9 @@ function updateExtraBalls() {
     }
 }
 
-// Draw game elements
+// Draw game elements.
 function draw() {
-    // Background: if Trippy, use a random rainbow color; otherwise, use semi-transparent black.
+    // Background: if Trippy mode, use a random rainbow color; otherwise, use semi-transparent black.
     if (aiDifficulty === "Trippy") {
         let hue = Math.floor(Math.random() * 360);
         ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.3)`;
@@ -109,19 +108,19 @@ function draw() {
         return;
     }
 
-    // Draw paddles (use currentPaddleHeight if in Trippy mode or Insaniest mode).
-    let ph = (aiDifficulty === "Insaniest" || aiDifficulty === "Trippy") ? currentPaddleHeight : paddleHeight;
+    // Use currentPaddleHeight for drawing paddles (in Trippy mode, it changes; otherwise, fixed).
+    let ph = (aiDifficulty === "Trippy" || aiDifficulty === "Insaniest") ? currentPaddleHeight : paddleHeight;
     ctx.fillStyle = "white";
     ctx.fillRect(10, playerY, paddleWidth, ph);
     ctx.fillRect(canvas.width - 20, aiY, paddleWidth, ph);
 
-    // Draw main ball
+    // Draw main ball.
     ctx.fillStyle = "white";
     ctx.beginPath();
     ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
     ctx.fill();
 
-    // Draw extra mini balls (only in Trippy mode)
+    // Draw extra mini balls (only in Trippy mode).
     if (aiDifficulty === "Trippy") {
         extraBalls.forEach(b => {
             ctx.fillStyle = `rgba(255,255,255,${b.alpha.toFixed(2)})`;
@@ -129,6 +128,17 @@ function draw() {
             ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
             ctx.fill();
         });
+        // Also, spawn extra mini balls with a small probability.
+        if (Math.random() < 0.1) {
+            extraBalls.push({
+                x: ballX,
+                y: ballY,
+                radius: 3 + Math.random() * 5, // radius between 3 and 8
+                vx: (Math.random() - 0.5) * 4,
+                vy: (Math.random() - 0.5) * 4,
+                alpha: 1.0
+            });
+        }
     }
 
     // Draw scores and difficulty setting.
@@ -153,7 +163,7 @@ function draw() {
     }
 }
 
-// Move ball and paddles
+// Move ball and paddles.
 function move() {
     ballX += ballSpeedX;
     ballY += ballSpeedY;
@@ -165,7 +175,7 @@ function move() {
     }
 
     // Use current paddle height for collision if in Trippy or Insaniest mode.
-    let ph = (aiDifficulty === "Insaniest" || aiDifficulty === "Trippy") ? currentPaddleHeight : paddleHeight;
+    let ph = (aiDifficulty === "Trippy" || aiDifficulty === "Insaniest") ? currentPaddleHeight : paddleHeight;
 
     // Ball collision with player's paddle.
     if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + ph) {
@@ -252,7 +262,7 @@ function setDifficulty(level) {
     if (difficulties[level]) {
         aiDifficulty = level;
         console.log("Difficulty set to: " + aiDifficulty);
-        // Clear extra balls when switching modes.
+        // Clear extra mini balls when switching modes.
         extraBalls = [];
         resetGame();
     } else {
