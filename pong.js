@@ -21,6 +21,9 @@ const maxScore = 5;
 let gameOver = false;
 let gameStarted = false;
 
+// Global variable for current paddle height (used for trippy mode)
+let currentPaddleHeight = paddleHeight;
+
 // AI Difficulty Levels and Modes
 const difficulties = {
     "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.72 },
@@ -29,7 +32,7 @@ const difficulties = {
     "Insane": { aiReaction: 1.2, ballSpeedMultiplier: 1.7 },
     "UltraInsane": { aiReaction: 2.0, ballSpeedMultiplier: 3.0 },
     "Insaniest": { aiReaction: 3.0, ballSpeedMultiplier: 4.5 },
-    "BigBall": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 } // Big Ball mode uses normal speed but a huge ball
+    "BigBall": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 } // Big Ball mode: normal speed, huge ball
 };
 let aiDifficulty = "Medium"; // Default difficulty
 
@@ -38,6 +41,14 @@ let moveUp = false, moveDown = false;
 
 // Game loop
 function gameLoop() {
+    // In Insaniest mode, update paddle and ball sizes every frame for a trippy effect.
+    if (aiDifficulty === "Insaniest") {
+        currentPaddleHeight = 40 + Math.random() * 80; // Random height between 40 and 120
+        ballRadius = 8 + Math.random() * 22;             // Random radius between 8 and 30
+    } else {
+        currentPaddleHeight = paddleHeight;
+    }
+  
     if (!gameOver && gameStarted) {
         move();
     }
@@ -45,13 +56,18 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Draw game elements with a purple trail effect and purple ball
+// Draw game elements with dynamic effects for Insaniest mode.
 function draw() {
-    // Clear canvas with semi-transparent purple to create a purple trail effect
-    ctx.fillStyle = "rgba(128, 0, 128, 0.3)";
+    // Background: if Insaniest, use a random rainbow color; otherwise use semi-transparent black.
+    if (aiDifficulty === "Insaniest") {
+        let hue = Math.floor(Math.random() * 360);
+        ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.3)`;
+    } else {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+    }
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // If game hasn't started, show start message and exit draw
+    // If game hasn't started, show start message and exit draw.
     if (!gameStarted) {
         ctx.fillStyle = "white";
         ctx.font = "30px Arial";
@@ -60,30 +76,28 @@ function draw() {
         return;
     }
 
-    // Draw paddles
+    // Use currentPaddleHeight for drawing paddles (trippy in Insaniest mode).
     ctx.fillStyle = "white";
-    ctx.fillRect(10, playerY, paddleWidth, paddleHeight);
-    ctx.fillRect(canvas.width - 20, aiY, paddleWidth, paddleHeight);
+    ctx.fillRect(10, playerY, paddleWidth, currentPaddleHeight);
+    ctx.fillRect(canvas.width - 20, aiY, paddleWidth, currentPaddleHeight);
 
-    // Draw ball in purple
+    // Draw ball in white (its size may vary in Insaniest mode).
     ctx.fillStyle = "white";
     ctx.beginPath();
     ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
     ctx.fill();
 
-    // Draw scores
+    // Draw scores and difficulty setting.
     ctx.fillStyle = "white";
     ctx.font = "20px Arial";
     ctx.textAlign = "left";
     ctx.fillText(`Player: ${playerScore}`, 20, 30);
     ctx.textAlign = "right";
     ctx.fillText(`AI: ${aiScore}`, canvas.width - 20, 30);
-
-    // Draw difficulty setting
     ctx.textAlign = "center";
     ctx.fillText(`Difficulty: ${aiDifficulty}`, canvas.width / 2, 30);
 
-    // If game over, display win/lose message
+    // If game over, display win/lose message.
     if (gameOver) {
         ctx.fillStyle = "rgba(0,0,0,0.8)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -100,20 +114,21 @@ function move() {
     ballX += ballSpeedX;
     ballY += ballSpeedY;
 
-    // Ball collision with top/bottom: reverse Y and add a slight horizontal boost
+    // Ball collision with top/bottom: reverse Y and add a slight horizontal boost.
     if (ballY - ballRadius < 0 || ballY + ballRadius > canvas.height) {
         ballSpeedY *= -1;
         ballSpeedX *= 1.1;
     }
 
-    // Calculate player's paddle speed (to impact ball bounce)
-    let playerPaddleSpeed = playerY - lastPlayerY;
-    lastPlayerY = playerY;
+    // Use current paddle height if in Insaniest mode; otherwise, use the fixed value.
+    let ph = (aiDifficulty === "Insaniest") ? currentPaddleHeight : paddleHeight;
 
-    // Ball collision with player's paddle
-    if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
-        ballSpeedX = Math.abs(ballSpeedX); // Ensure ball goes right
-        ballSpeedY += playerPaddleSpeed * 0.5; // Add paddle speed impact
+    // Ball collision with player's paddle.
+    if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + ph) {
+        ballSpeedX = Math.abs(ballSpeedX); // Ensure ball goes right.
+        // Add paddle speed impact.
+        let playerPaddleSpeed = playerY - lastPlayerY;
+        ballSpeedY += playerPaddleSpeed * 0.5;
         if (aiDifficulty === "UltraInsane") {
             ballSpeedX *= 1.2;
             ballSpeedY *= 1.2;
@@ -122,9 +137,9 @@ function move() {
             ballSpeedY *= 1.3;
         }
     }
-    // Ball collision with AI paddle
-    if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight) {
-        ballSpeedX = -Math.abs(ballSpeedX); // Ensure ball goes left
+    // Ball collision with AI paddle.
+    if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + ph) {
+        ballSpeedX = -Math.abs(ballSpeedX); // Ensure ball goes left.
         if (aiDifficulty === "UltraInsane") {
             ballSpeedX *= 1.2;
             ballSpeedY *= 1.2;
@@ -134,7 +149,7 @@ function move() {
         }
     }
 
-    // Check for scoring (ball goes offscreen behind a paddle)
+    // Check for scoring (ball goes offscreen behind a paddle).
     if (ballX - ballRadius < 0) {
         aiScore++;
         if (aiScore === maxScore) {
@@ -151,25 +166,27 @@ function move() {
         }
     }
 
-    // AI paddle follows the ball
+    // AI paddle follows the ball.
     let aiReactionSpeed = difficulties[aiDifficulty].aiReaction;
-    if (aiY + paddleHeight / 2 < ballY - 10) {
+    if (aiY + ph / 2 < ballY - 10) {
         aiY += playerSpeed * aiReactionSpeed;
-    } else if (aiY + paddleHeight / 2 > ballY + 10) {
+    } else if (aiY + ph / 2 > ballY + 10) {
         aiY -= playerSpeed * aiReactionSpeed;
     }
 
-    // Player paddle movement
+    // Player paddle movement.
     if (moveUp && playerY > 0) {
         playerY -= playerSpeed;
     }
-    if (moveDown && playerY < canvas.height - paddleHeight) {
+    if (moveDown && playerY < canvas.height - ph) {
         playerY += playerSpeed;
     }
+
+    lastPlayerY = playerY;
 }
 
 // Reset the ball to the center with fixed base speeds.
-// In "BigBall" mode, the ball's radius is increased to 40.
+// In "BigBall" mode, the ball's radius is set to 40.
 function resetBall() {
     if (aiDifficulty === "BigBall") {
         ballRadius = 40;
@@ -187,7 +204,7 @@ function resetBall() {
     }
 }
 
-// Change difficulty (or mode) and reset the game without cumulative speed increase
+// Change difficulty (or mode) and reset the game without cumulative speed increase.
 function setDifficulty(level) {
     if (difficulties[level]) {
         aiDifficulty = level;
@@ -198,14 +215,14 @@ function setDifficulty(level) {
     }
 }
 
-// End the game: stop ball movement and mark game over
+// End the game: stop ball movement and mark game over.
 function endGame(result) {
     gameOver = result;
     ballSpeedX = 0;
     ballSpeedY = 0;
 }
 
-// Reset game state for a new game
+// Reset game state for a new game.
 function resetGame() {
     playerScore = 0;
     aiScore = 0;
@@ -214,7 +231,7 @@ function resetGame() {
     resetBall();
 }
 
-// Handle key events
+// Handle key events.
 function handleKeydown(event) {
     console.log("Key pressed: " + event.key);
     if (event.key === "ArrowUp") moveUp = true;
@@ -231,7 +248,7 @@ function handleKeydown(event) {
     if (event.key === "4") setDifficulty("Insane");
     if (event.key === "5") setDifficulty("UltraInsane");
     if (event.key === "6") {
-        console.log("Setting difficulty to Insaniest");
+        console.log("Setting difficulty to Insaniest (Trippy Mode)");
         setDifficulty("Insaniest");
     }
     if (event.key === "7" || event.key === "Numpad7") {
@@ -245,9 +262,9 @@ function handleKeyup(event) {
     if (event.key === "ArrowDown") moveDown = false;
 }
 
-// Add key listeners
+// Add key listeners.
 document.addEventListener("keydown", handleKeydown);
 document.addEventListener("keyup", handleKeyup);
 
-// Draw the initial start screen
+// Draw the initial start screen.
 draw();
