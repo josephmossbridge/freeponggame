@@ -1,4 +1,4 @@
-// Select canvas
+// Select canvas and context
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -17,96 +17,102 @@ let ballRadius = 8;
 
 // Scoring & game state
 let playerScore = 0, aiScore = 0;
-let maxScore = 5; // Default; will be set to 5000 in Infinite mode.
+let maxScore = 5; // Default target; in Infinite mode, this becomes 5000.
 let gameOver = false;
 let gameStarted = false;
 
-// Global variable for trippy effects (for modes like Trippy)
+// Variables for Trippy mode effects
 let currentPaddleHeight = paddleHeight;
 let lastTrippyUpdate = 0;
 let trippyInterval = 0;
-
-// Array for extra mini balls (for Trippy mode)
 let extraBalls = [];
 
-// For Infinite mode, we use an array to store multiple balls.
+// For Infinite mode, use an array of balls.
 let balls = [];
 
-// AI Difficulty Levels and Modes
+// AI Difficulty Levels & Modes
 const difficulties = {
-    "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.72 },
-    "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 0.9 },
-    "Hard": { aiReaction: 0.8, ballSpeedMultiplier: 1.17 },
-    "Insane": { aiReaction: 1.2, ballSpeedMultiplier: 1.7 },
-    "UltraInsane": { aiReaction: 2.0, ballSpeedMultiplier: 3.0 },
-    "Insaniest": { aiReaction: 3.0, ballSpeedMultiplier: 4.5 },
-    "BigBall": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
-    "Trippy": { aiReaction: 0.6, ballSpeedMultiplier: 0.9 },
-    "Infinite": { aiReaction: 0.6, ballSpeedMultiplier: 0.9 }
+  "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.72 },
+  "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 0.9 },
+  "Hard": { aiReaction: 0.8, ballSpeedMultiplier: 1.17 },
+  "Insane": { aiReaction: 1.2, ballSpeedMultiplier: 1.7 },
+  "UltraInsane": { aiReaction: 2.0, ballSpeedMultiplier: 3.0 },
+  "Insaniest": { aiReaction: 3.0, ballSpeedMultiplier: 4.5 },
+  "BigBall": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
+  "Trippy": { aiReaction: 0.6, ballSpeedMultiplier: 0.9 },
+  "Infinite": { aiReaction: 0.6, ballSpeedMultiplier: 0.9 }
 };
 let aiDifficulty = "Medium"; // Default mode
 
 // Player movement tracking
 let moveUp = false, moveDown = false;
 
-// Game loop
+// Main game loop
 function gameLoop() {
+  // For Trippy mode, update paddle and ball size effects every 1–3 seconds.
   if (aiDifficulty === "Trippy") {
-    // Update trippy effects every 1-3 seconds.
     const now = Date.now();
     if (!lastTrippyUpdate || now - lastTrippyUpdate >= trippyInterval) {
       currentPaddleHeight = 30 + Math.random() * 170; // Between 30 and 200
       ballRadius = 8 + Math.random() * 32; // Between 8 and 40
-      trippyInterval = 1000 + Math.random() * 2000; // 1-3 seconds
+      trippyInterval = 1000 + Math.random() * 2000; // 1–3 seconds
       lastTrippyUpdate = now;
     }
   } else if (aiDifficulty !== "Trippy") {
     currentPaddleHeight = paddleHeight;
   }
 
+  // Use different movement functions based on mode.
   if (aiDifficulty === "Infinite") {
     moveInfinite();
   } else {
     moveSingle();
   }
+  
   draw();
   requestAnimationFrame(gameLoop);
 }
 
-// For Infinite mode: update each ball, check collisions, and double the ball count on paddle hits.
+// --- Infinite Mode Functions --- //
 function moveInfinite() {
   let collisionsThisFrame = 0;
   for (let i = balls.length - 1; i >= 0; i--) {
     let b = balls[i];
     b.x += b.vx;
     b.y += b.vy;
-    // Bounce off top/bottom:
-    if (b.y - b.radius < 0 || b.y + b.radius > canvas.height) {
-      b.vy *= -1;
-      b.vx *= 1.1;
+    // Bounce off top/bottom without extra speed multipliers.
+    if (b.y - b.radius < 0) {
+      b.y = b.radius;
+      b.vy = -b.vy;
     }
-    // Check collision with player's paddle:
+    if (b.y + b.radius > canvas.height) {
+      b.y = canvas.height - b.radius;
+      b.vy = -b.vy;
+    }
+    // Collision with player's paddle.
     if (b.x - b.radius < 20 && b.y > playerY && b.y < playerY + paddleHeight) {
+      b.x = 20 + b.radius;
       b.vx = Math.abs(b.vx);
       if (!b.justHit) {
         b.justHit = true;
         collisionsThisFrame++;
       }
     }
-    // Check collision with AI paddle:
+    // Collision with AI paddle.
     if (b.x + b.radius > canvas.width - 20 && b.y > aiY && b.y < aiY + paddleHeight) {
+      b.x = canvas.width - 20 - b.radius;
       b.vx = -Math.abs(b.vx);
       if (!b.justHit) {
         b.justHit = true;
         collisionsThisFrame++;
       }
     }
-    // Reset justHit if no collision:
+    // Reset justHit if not colliding with a paddle.
     if (!((b.x - b.radius < 20 && b.y > playerY && b.y < playerY + paddleHeight) ||
           (b.x + b.radius > canvas.width - 20 && b.y > aiY && b.y < aiY + paddleHeight))) {
       b.justHit = false;
     }
-    // Scoring: if ball goes off left or right, remove it and update score.
+    // Scoring: if ball goes offscreen, remove it and update score.
     if (b.x - b.radius < 0) {
       aiScore++;
       balls.splice(i, 1);
@@ -115,12 +121,12 @@ function moveInfinite() {
       balls.splice(i, 1);
     }
   }
-  // For each collision detected, double the set of balls.
-  for (let j = 0; j < collisionsThisFrame; j++) {
-    let currentBalls = balls.slice();
-    balls = balls.concat(currentBalls);
+  // For each collision event, duplicate all remaining balls.
+  if (collisionsThisFrame > 0 && balls.length > 0) {
+    let copy = balls.map(b => ({ ...b, justHit: false }));
+    balls = balls.concat(copy);
   }
-  // If all balls are lost, add a new one.
+  // If all balls are lost, spawn a new ball.
   if (balls.length === 0) {
     balls.push({
       x: canvas.width / 2,
@@ -131,7 +137,7 @@ function moveInfinite() {
       justHit: false
     });
   }
-  // Update AI paddle to follow one of the balls (choose the one furthest to the right).
+  // AI paddle follows one of the balls (choose the one with the highest x value).
   if (balls.length > 0) {
     let target = balls.reduce((prev, curr) => (curr.x > prev.x ? curr : prev), balls[0]);
     if (aiY + paddleHeight / 2 < target.y - 10) {
@@ -140,13 +146,13 @@ function moveInfinite() {
       aiY -= playerSpeed * difficulties["Infinite"].aiReaction;
     }
   }
-  // Player paddle movement:
+  // Player paddle movement.
   if (moveUp && playerY > 0) playerY -= playerSpeed;
   if (moveDown && playerY < canvas.height - paddleHeight) playerY += playerSpeed;
   lastPlayerY = playerY;
 }
 
-// For non-Infinite modes: single ball logic.
+// --- Single-Ball Mode --- //
 function moveSingle() {
   ballX += ballSpeedX;
   ballY += ballSpeedY;
@@ -196,7 +202,7 @@ function moveSingle() {
 
 // Draw function
 function draw() {
-  // Background: for Trippy mode, random rainbow; otherwise, semi-transparent black.
+  // Background: for Trippy mode, use a random rainbow color; otherwise, semi-transparent black.
   if (aiDifficulty === "Trippy") {
     let hue = Math.floor(Math.random() * 360);
     ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.3)`;
@@ -213,7 +219,7 @@ function draw() {
     return;
   }
 
-  // Draw paddles. In Trippy (or Insaniest) mode, use currentPaddleHeight; otherwise, fixed height.
+  // Draw paddles – if in Trippy (or Insaniest) mode, use currentPaddleHeight.
   let ph = (aiDifficulty === "Trippy" || aiDifficulty === "Insaniest") ? currentPaddleHeight : paddleHeight;
   ctx.fillStyle = "white";
   ctx.fillRect(10, playerY, paddleWidth, ph);
@@ -241,7 +247,6 @@ function draw() {
       ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
       ctx.fill();
     });
-    // Spawn extra mini balls with small probability.
     if (Math.random() < 0.1) {
       extraBalls.push({
         x: ballX,
@@ -254,7 +259,7 @@ function draw() {
     }
   }
 
-  // Draw scores and current mode.
+  // Draw scores and mode label.
   ctx.fillStyle = "white";
   ctx.font = "20px Arial";
   ctx.textAlign = "left";
@@ -276,7 +281,7 @@ function draw() {
   }
 }
 
-// Reset ball function – handles both single-ball and Infinite mode.
+// Reset function
 function resetBall() {
   if (aiDifficulty === "Infinite") {
     maxScore = 5000;
@@ -304,9 +309,7 @@ function setDifficulty(level) {
   if (difficulties[level]) {
     aiDifficulty = level;
     console.log("Mode set to: " + aiDifficulty);
-    // Clear extra mini balls when switching modes.
     extraBalls = [];
-    // For Infinite mode, update the scoring target.
     if (aiDifficulty === "Infinite") {
       maxScore = 5000;
     } else {
@@ -373,9 +376,7 @@ function handleKeyup(event) {
   if (event.key === "ArrowDown") moveDown = false;
 }
 
-// Add event listeners.
 document.addEventListener("keydown", handleKeydown);
 document.addEventListener("keyup", handleKeyup);
 
-// Draw initial screen.
 draw();
