@@ -1,230 +1,141 @@
-// Select canvas
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-
-// Paddle properties
-const paddleWidth = 10, paddleHeight = 80;
-let playerY = canvas.height / 2 - paddleHeight / 2;
-let aiY = playerY;
-const playerSpeed = 5;
-let lastPlayerY = playerY; // To track paddle movement speed
-
-// Ball properties
-let ballX = canvas.width / 2, ballY = canvas.height / 2;
-const baseBallSpeedX = 6.3, baseBallSpeedY = 6.3; // Fixed starting speeds
-let ballSpeedX = 0, ballSpeedY = 0; // Ball stays still until game starts
-let ballRadius = 8;
-
-// Score tracking
-let playerScore = 0, aiScore = 0;
-const maxScore = 5;
-let gameOver = false;
-let gameStarted = false;
-
-// AI Difficulty Levels
-const difficulties = {
-    "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.72 },
-    "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 0.9 },
-    "Hard": { aiReaction: 0.8, ballSpeedMultiplier: 1.17 },
-    "Insane": { aiReaction: 1.2, ballSpeedMultiplier: 1.7 },
-    "UltraInsane": { aiReaction: 2.0, ballSpeedMultiplier: 3.0 },
-    "Insaniest": { aiReaction: 3.0, ballSpeedMultiplier: 4.5 } // Most insane mode
-};
-let aiDifficulty = "Medium"; // Default difficulty
-
-// Player movement tracking
-let moveUp = false, moveDown = false;
-
-// Game loop
-function gameLoop() {
-    if (!gameOver && gameStarted) {
-        move();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Play the best free Pong game online! Challenge an AI opponent, compete for the high score, and experience improved physics and difficulty settings.">
+  <meta name="keywords" content="Pong game, free Pong, online Pong, classic arcade games, play Pong, Pong AI">
+  <meta name="author" content="Joseph Mossbridge">
+  <title>Free Pong Game - Play Online for Free</title>
+  <style>
+    body { text-align: center; background: black; color: white; font-family: Arial, sans-serif; }
+    .container { display: flex; justify-content: center; align-items: start; gap: 20px; }
+    canvas { border: 2px solid white; display: block; }
+    .info-box {
+      text-align: left;
+      font-size: 16px;
+      padding: 10px;
+      border: 2px solid white;
+      background: #222;
+      max-width: 200px;
     }
-    draw();
-    requestAnimationFrame(gameLoop);
-}
-
-// Draw game elements
-function draw() {
-    // Clear canvas
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // If game hasn't started, show start message and exit draw
-    if (!gameStarted) {
-        ctx.fillStyle = "white";
-        ctx.font = "30px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText("Press SPACEBAR to Start", canvas.width / 2, canvas.height / 2);
-        return;
+    ul { padding: 0; list-style: none; }
+    #startMessage {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px 20px;
+      border: 2px solid white;
     }
+  </style>
+</head>
+<body>
+  <h1>Free Pong Game</h1>
 
-    // Draw paddles
-    ctx.fillStyle = "white";
-    ctx.fillRect(10, playerY, paddleWidth, paddleHeight);
-    ctx.fillRect(canvas.width - 20, aiY, paddleWidth, paddleHeight);
+  <!-- SEO Optimized Paragraph -->
+  <p>
+    Welcome to the <strong>best free Pong game online</strong>! Challenge an advanced AI in this <strong>classic arcade game</strong> with enhanced physics, multiple difficulty levels, and a real-time leaderboard. Whether you're a casual gamer or a Pong pro, you'll love the smooth gameplay and competitive AI. Play now and see if you can top the leaderboard!
+  </p>
 
-    // Draw ball
-    ctx.beginPath();
-    ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
-    ctx.fill();
+  <!-- Start Message -->
+  <div id="startMessage">Press SPACEBAR to Start</div>
 
-    // Draw scores
-    ctx.fillStyle = "white";
-    ctx.font = "20px Arial";
-    ctx.textAlign = "left";
-    ctx.fillText(`Player: ${playerScore}`, 20, 30);
-    ctx.textAlign = "right";
-    ctx.fillText(`AI: ${aiScore}`, canvas.width - 20, 30);
+  <div class="container">
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
 
-    // Draw difficulty setting
-    ctx.textAlign = "center";
-    ctx.fillText(`Difficulty: ${aiDifficulty}`, canvas.width / 2, 30);
+    <div>
+      <div class="info-box">
+        <h3>Controls</h3>
+        <p>⬆️ Arrow Up: Move Up</p>
+        <p>⬇️ Arrow Down: Move Down</p>
+        <h3>Difficulty</h3>
+        <p>1️⃣ Press 1 - Easy</p>
+        <p>2️⃣ Press 2 - Medium</p>
+        <p>3️⃣ Press 3 - Hard</p>
+        <p>4️⃣ Press 4 - Insane</p>
+        <p>5️⃣ Press 5 - Ultra Insane</p>
+        <p>6️⃣ Press 6 - Insaniest</p>
+      </div>
 
-    // If game over, display win/lose message
-    if (gameOver) {
-        ctx.fillStyle = "rgba(0,0,0,0.8)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "white";
-        ctx.font = "40px Arial";
-        ctx.fillText(gameOver === "win" ? "🎉 YOU WIN! 🎉" : "😞 YOU LOSE! 😞", canvas.width / 2, canvas.height / 2 - 20);
-        ctx.font = "20px Arial";
-        ctx.fillText("Press SPACEBAR to Restart", canvas.width / 2, canvas.height / 2 + 40);
-    }
-}
+      <div class="info-box">
+        <h3>Leaderboard</h3>
+        <ul id="leaderboard"></ul>
+      </div>
+    </div>
+  </div>
 
-// Move ball and paddles
-function move() {
-    ballX += ballSpeedX;
-    ballY += ballSpeedY;
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // Ball collision with top/bottom: reverse Y and add a slight horizontal boost
-    if (ballY - ballRadius < 0 || ballY + ballRadius > canvas.height) {
-        ballSpeedY *= -1;
-        ballSpeedX *= 1.1;
+    // Paste your Firebase config here:
+    const firebaseConfig = {
+         apiKey: "AIzaSyB-GLAmArdzA_1DVIAX8yKXxFkw7Wwa5dQ",
+         authDomain: "pong-leaderboard-79ba7.firebaseapp.com",
+         databaseURL: "https://pong-leaderboard-79ba7-default-rtdb.firebaseio.com",
+         projectId: "pong-leaderboard-79ba7",
+         storageBucket: "pong-leaderboard-79ba7.appspot.com",
+         messagingSenderId: "534728216752",
+         appId: "1:534728216752:web:e65fa43523182b67aeb75",
+         measurementId: "G-K5PE33HMPF"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    // Function to submit score to Firebase
+    function submitScore(playerName, score, difficulty) {
+      const scoresRef = ref(database, 'leaderboard/' + Date.now());
+      set(scoresRef, {
+        name: playerName,
+        score: score,
+        difficulty: difficulty
+      });
     }
 
-    // Calculate player's paddle speed (to impact ball bounce)
-    let playerPaddleSpeed = playerY - lastPlayerY;
-    lastPlayerY = playerY;
-
-    // Ball collision with player's paddle
-    if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
-        ballSpeedX = Math.abs(ballSpeedX); // Ensure ball goes right
-        ballSpeedY += playerPaddleSpeed * 0.5; // Add paddle speed impact
-        if (aiDifficulty === "UltraInsane") {
-            ballSpeedX *= 1.2;
-            ballSpeedY *= 1.2;
-        } else if (aiDifficulty === "Insaniest") {
-            ballSpeedX *= 1.3;
-            ballSpeedY *= 1.3;
+    // Function to load leaderboard from Firebase
+    function loadLeaderboard() {
+      const leaderboardRef = ref(database, 'leaderboard');
+      get(leaderboardRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          const scores = Object.values(snapshot.val());
+          scores.sort((a, b) => b.score - a.score); // Sort highest first
+          displayLeaderboard(scores);
         }
-    }
-    // Ball collision with AI paddle
-    if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight) {
-        ballSpeedX = -Math.abs(ballSpeedX); // Ensure ball goes left
-        if (aiDifficulty === "UltraInsane") {
-            ballSpeedX *= 1.2;
-            ballSpeedY *= 1.2;
-        } else if (aiDifficulty === "Insaniest") {
-            ballSpeedX *= 1.3;
-            ballSpeedY *= 1.3;
-        }
+      });
     }
 
-    // Check for scoring (ball goes offscreen behind a paddle)
-    if (ballX - ballRadius < 0) {
-        aiScore++;
-        if (aiScore === maxScore) {
-            endGame("lose");
-        } else {
-            resetBall();
-        }
-    } else if (ballX + ballRadius > canvas.width) {
-        playerScore++;
-        if (playerScore === maxScore) {
-            endGame("win");
-        } else {
-            resetBall();
-        }
+    // Function to display leaderboard
+    function displayLeaderboard(scores) {
+      const leaderboardEl = document.getElementById("leaderboard");
+      leaderboardEl.innerHTML = scores.slice(0, 10).map(entry =>
+        `<li>${entry.name} - ${entry.score} (${entry.difficulty})</li>`
+      ).join("");
     }
 
-    // AI paddle follows the ball
-    let aiReactionSpeed = difficulties[aiDifficulty].aiReaction;
-    if (aiY + paddleHeight / 2 < ballY - 10) {
-        aiY += playerSpeed * aiReactionSpeed;
-    } else if (aiY + paddleHeight / 2 > ballY + 10) {
-        aiY -= playerSpeed * aiReactionSpeed;
-    }
+    // Expose functions globally so pong.js can call them
+    window.submitScore = submitScore;
+    window.loadLeaderboard = loadLeaderboard;
+    window.updateLeaderboard = displayLeaderboard;
 
-    // Player paddle movement
-    if (moveUp && playerY > 0) {
-        playerY -= playerSpeed;
-    }
-    if (moveDown && playerY < canvas.height - paddleHeight) {
-        playerY += playerSpeed;
-    }
-}
+    // Load leaderboard on page load
+    document.addEventListener("DOMContentLoaded", loadLeaderboard);
+  </script>
 
-// Reset the ball to the center with fixed base speeds
-function resetBall() {
-    let speedMultiplier = difficulties[aiDifficulty].ballSpeedMultiplier;
-    ballX = canvas.width / 2;
-    ballY = canvas.height / 2;
-    ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * baseBallSpeedX * speedMultiplier;
-    ballSpeedY = (Math.random() * 6 - 3) * speedMultiplier;
-}
-
-// Change difficulty and reset the game without cumulative speed increase
-function setDifficulty(level) {
-    if (difficulties[level]) {
-        aiDifficulty = level;
-        resetGame();
-    }
-}
-
-// End the game: stop ball movement and mark game over
-function endGame(result) {
-    gameOver = result;
-    ballSpeedX = 0;
-    ballSpeedY = 0;
-}
-
-// Reset game state for a new game
-function resetGame() {
-    playerScore = 0;
-    aiScore = 0;
-    gameOver = false;
-    gameStarted = true;
-    resetBall();
-}
-
-// Handle key events
-function handleKeydown(event) {
-    if (event.key === "ArrowUp") moveUp = true;
-    if (event.key === "ArrowDown") moveDown = true;
-    if (event.key === " " && !gameStarted) {
-        gameStarted = true;
-        resetBall();
-        gameLoop();
-    }
-    if (event.key === " " && gameOver) resetGame();
-    if (event.key === "1") setDifficulty("Easy");
-    if (event.key === "2") setDifficulty("Medium");
-    if (event.key === "3") setDifficulty("Hard");
-    if (event.key === "4") setDifficulty("Insane");
-    if (event.key === "5") setDifficulty("UltraInsane");
-    if (event.key === "6") setDifficulty("Insaniest"); // Press 6 for Insaniest mode
-}
-
-function handleKeyup(event) {
-    if (event.key === "ArrowUp") moveUp = false;
-    if (event.key === "ArrowDown") moveDown = false;
-}
-
-// Add key listeners
-document.addEventListener("keydown", handleKeydown);
-document.addEventListener("keyup", handleKeyup);
-
-// Draw the initial start screen
-draw();
+  <script src="pong.js"></script>
+  
+  <!-- Optional: Remove start message on Spacebar press if not handled in pong.js -->
+  <script>
+    document.addEventListener('keydown', function(event) {
+      if (event.code === 'Space') {
+        document.getElementById('startMessage').style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
