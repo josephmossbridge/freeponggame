@@ -21,8 +21,11 @@ const maxScore = 5;
 let gameOver = false;
 let gameStarted = false;
 
-// Global variable for current paddle height (used for trippy mode)
+// Global variable for current paddle height (for trippy effects)
 let currentPaddleHeight = paddleHeight;
+
+// Array to store extra mini balls (for Trippy mode)
+let extraBalls = [];
 
 // AI Difficulty Levels and Modes
 const difficulties = {
@@ -32,7 +35,8 @@ const difficulties = {
     "Insane": { aiReaction: 1.2, ballSpeedMultiplier: 1.7 },
     "UltraInsane": { aiReaction: 2.0, ballSpeedMultiplier: 3.0 },
     "Insaniest": { aiReaction: 3.0, ballSpeedMultiplier: 4.5 },
-    "BigBall": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 } // Big Ball mode: normal speed, huge ball
+    "BigBall": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
+    "Trippy": { aiReaction: 0.6, ballSpeedMultiplier: 0.9 } // Equivalent to Medium speed
 };
 let aiDifficulty = "Medium"; // Default difficulty
 
@@ -41,14 +45,30 @@ let moveUp = false, moveDown = false;
 
 // Game loop
 function gameLoop() {
-    // In Insaniest mode, update paddle and ball sizes every frame for a trippy effect.
-    if (aiDifficulty === "Insaniest") {
-        currentPaddleHeight = 40 + Math.random() * 80; // Random height between 40 and 120
-        ballRadius = 8 + Math.random() * 22;             // Random radius between 8 and 30
-    } else {
+    // For Trippy mode, update extra effects each frame.
+    if (aiDifficulty === "Trippy") {
+        // Randomize paddle height between 60 and 120.
+        currentPaddleHeight = 60 + Math.random() * 60;
+        // Randomize the main ball's radius between 8 and 20.
+        ballRadius = 8 + Math.random() * 12;
+        // Spawn extra mini balls with a small probability.
+        if (Math.random() < 0.1) {
+            extraBalls.push({
+                x: ballX,
+                y: ballY,
+                radius: 3 + Math.random() * 5, // radius between 3 and 8
+                vx: (Math.random() - 0.5) * 4,
+                vy: (Math.random() - 0.5) * 4,
+                alpha: 1.0
+            });
+        }
+    } else if (aiDifficulty !== "Trippy") {
         currentPaddleHeight = paddleHeight;
     }
-  
+
+    // Update extra balls (only used in Trippy mode)
+    updateExtraBalls();
+
     if (!gameOver && gameStarted) {
         move();
     }
@@ -56,10 +76,23 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Draw game elements with dynamic effects for Insaniest mode.
+// Update extra mini balls: move them and fade them out.
+function updateExtraBalls() {
+    for (let i = extraBalls.length - 1; i >= 0; i--) {
+        let b = extraBalls[i];
+        b.x += b.vx;
+        b.y += b.vy;
+        b.alpha -= 0.02; // fade out over time
+        if (b.alpha <= 0) {
+            extraBalls.splice(i, 1);
+        }
+    }
+}
+
+// Draw game elements
 function draw() {
-    // Background: if Insaniest, use a random rainbow color; otherwise use semi-transparent black.
-    if (aiDifficulty === "Insaniest") {
+    // Background: if Trippy, use a random rainbow color; otherwise, use semi-transparent black.
+    if (aiDifficulty === "Trippy") {
         let hue = Math.floor(Math.random() * 360);
         ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.3)`;
     } else {
@@ -67,7 +100,7 @@ function draw() {
     }
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // If game hasn't started, show start message and exit draw.
+    // If game hasn't started, show start message.
     if (!gameStarted) {
         ctx.fillStyle = "white";
         ctx.font = "30px Arial";
@@ -76,16 +109,27 @@ function draw() {
         return;
     }
 
-    // Use currentPaddleHeight for drawing paddles (trippy in Insaniest mode).
+    // Draw paddles (use currentPaddleHeight if in Trippy mode or Insaniest mode).
+    let ph = (aiDifficulty === "Insaniest" || aiDifficulty === "Trippy") ? currentPaddleHeight : paddleHeight;
     ctx.fillStyle = "white";
-    ctx.fillRect(10, playerY, paddleWidth, currentPaddleHeight);
-    ctx.fillRect(canvas.width - 20, aiY, paddleWidth, currentPaddleHeight);
+    ctx.fillRect(10, playerY, paddleWidth, ph);
+    ctx.fillRect(canvas.width - 20, aiY, paddleWidth, ph);
 
-    // Draw ball in white (its size may vary in Insaniest mode).
+    // Draw main ball
     ctx.fillStyle = "white";
     ctx.beginPath();
     ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
     ctx.fill();
+
+    // Draw extra mini balls (only in Trippy mode)
+    if (aiDifficulty === "Trippy") {
+        extraBalls.forEach(b => {
+            ctx.fillStyle = `rgba(255,255,255,${b.alpha.toFixed(2)})`;
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
 
     // Draw scores and difficulty setting.
     ctx.fillStyle = "white";
@@ -120,13 +164,12 @@ function move() {
         ballSpeedX *= 1.1;
     }
 
-    // Use current paddle height if in Insaniest mode; otherwise, use the fixed value.
-    let ph = (aiDifficulty === "Insaniest") ? currentPaddleHeight : paddleHeight;
+    // Use current paddle height for collision if in Trippy or Insaniest mode.
+    let ph = (aiDifficulty === "Insaniest" || aiDifficulty === "Trippy") ? currentPaddleHeight : paddleHeight;
 
     // Ball collision with player's paddle.
     if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + ph) {
         ballSpeedX = Math.abs(ballSpeedX); // Ensure ball goes right.
-        // Add paddle speed impact.
         let playerPaddleSpeed = playerY - lastPlayerY;
         ballSpeedY += playerPaddleSpeed * 0.5;
         if (aiDifficulty === "UltraInsane") {
@@ -149,7 +192,7 @@ function move() {
         }
     }
 
-    // Check for scoring (ball goes offscreen behind a paddle).
+    // Check for scoring.
     if (ballX - ballRadius < 0) {
         aiScore++;
         if (aiScore === maxScore) {
@@ -204,18 +247,20 @@ function resetBall() {
     }
 }
 
-// Change difficulty (or mode) and reset the game without cumulative speed increase.
+// Change difficulty (or mode) and reset the game.
 function setDifficulty(level) {
     if (difficulties[level]) {
         aiDifficulty = level;
         console.log("Difficulty set to: " + aiDifficulty);
+        // Clear extra balls when switching modes.
+        extraBalls = [];
         resetGame();
     } else {
         console.log("No difficulty level for: " + level);
     }
 }
 
-// End the game: stop ball movement and mark game over.
+// End the game.
 function endGame(result) {
     gameOver = result;
     ballSpeedX = 0;
@@ -248,12 +293,16 @@ function handleKeydown(event) {
     if (event.key === "4") setDifficulty("Insane");
     if (event.key === "5") setDifficulty("UltraInsane");
     if (event.key === "6") {
-        console.log("Setting difficulty to Insaniest (Trippy Mode)");
+        console.log("Setting difficulty to Insaniest");
         setDifficulty("Insaniest");
     }
     if (event.key === "7" || event.key === "Numpad7") {
         console.log("Setting mode to Big Ball");
         setDifficulty("BigBall");
+    }
+    if (event.key === "8" || event.key === "Numpad8") {
+        console.log("Setting mode to Trippy");
+        setDifficulty("Trippy");
     }
 }
 
