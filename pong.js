@@ -27,7 +27,8 @@ const difficulties = {
     "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 0.9 },
     "Hard": { aiReaction: 0.8, ballSpeedMultiplier: 1.17 },
     "Insane": { aiReaction: 1.2, ballSpeedMultiplier: 1.7 },
-    "UltraInsane": { aiReaction: 2.0, ballSpeedMultiplier: 3.0 } // Ultra ultra fast mode
+    "UltraInsane": { aiReaction: 2.0, ballSpeedMultiplier: 3.0 },
+    "Insaniest": { aiReaction: 3.0, ballSpeedMultiplier: 4.5 } // Most insane mode
 };
 let aiDifficulty = "Medium"; // Default difficulty
 
@@ -112,8 +113,11 @@ function move() {
         ballSpeedX = Math.abs(ballSpeedX); // Ensure ball goes right
         ballSpeedY += playerPaddleSpeed * 0.5; // Add paddle speed impact
         if (aiDifficulty === "UltraInsane") {
-            ballSpeedX *= 1.2; // Extra boost in UltraInsane mode
+            ballSpeedX *= 1.2;
             ballSpeedY *= 1.2;
+        } else if (aiDifficulty === "Insaniest") {
+            ballSpeedX *= 1.3;
+            ballSpeedY *= 1.3;
         }
     }
     // Ball collision with AI paddle
@@ -122,6 +126,9 @@ function move() {
         if (aiDifficulty === "UltraInsane") {
             ballSpeedX *= 1.2;
             ballSpeedY *= 1.2;
+        } else if (aiDifficulty === "Insaniest") {
+            ballSpeedX *= 1.3;
+            ballSpeedY *= 1.3;
         }
     }
 
@@ -206,7 +213,8 @@ function handleKeydown(event) {
     if (event.key === "2") setDifficulty("Medium");
     if (event.key === "3") setDifficulty("Hard");
     if (event.key === "4") setDifficulty("Insane");
-    if (event.key === "5") setDifficulty("UltraInsane"); // Press 5 for UltraInsane mode
+    if (event.key === "5") setDifficulty("UltraInsane");
+    if (event.key === "6") setDifficulty("Insaniest"); // Press 6 for Insaniest mode
 }
 
 function handleKeyup(event) {
