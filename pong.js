@@ -28,7 +28,7 @@ const difficulties = {
     "Hard": { aiReaction: 0.8, ballSpeedMultiplier: 1.17 },
     "Insane": { aiReaction: 1.2, ballSpeedMultiplier: 1.7 },
     "UltraInsane": { aiReaction: 2.0, ballSpeedMultiplier: 3.0 },
-    "Insaniest": { aiReaction: 3.0, ballSpeedMultiplier: 4.5 } // Most insane mode
+    "Insaniest": { aiReaction: 3.0, ballSpeedMultiplier: 4.5 }
 };
 let aiDifficulty = "Medium"; // Default difficulty
 
@@ -44,10 +44,10 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Draw game elements
+// Draw game elements with trail effect and purple ball
 function draw() {
-    // Clear canvas
-    ctx.fillStyle = "black";
+    // Clear canvas with semi-transparent black to create a trail effect
+    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // If game hasn't started, show start message and exit draw
@@ -64,7 +64,8 @@ function draw() {
     ctx.fillRect(10, playerY, paddleWidth, paddleHeight);
     ctx.fillRect(canvas.width - 20, aiY, paddleWidth, paddleHeight);
 
-    // Draw ball
+    // Draw ball in purple
+    ctx.fillStyle = "purple";
     ctx.beginPath();
     ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
     ctx.fill();
