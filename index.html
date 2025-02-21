@@ -36,7 +36,7 @@
 
   <!-- SEO Optimized Paragraph -->
   <p>
-    Welcome to the <strong>best free Pong game online</strong>! Challenge an advanced AI in this <strong>classic arcade game</strong> with enhanced physics and multiple difficulty levels. Whether you're a casual gamer or a Pong pro, you'll love the smooth gameplay and competitive AI. Play now and have fun!
+    Welcome to the <strong>best free Pong game online</strong>! Challenge an advanced AI in this <strong>classic arcade game</strong> with enhanced physics and multiple difficulty modes. Whether you're a casual gamer or a Pong pro, you'll love the smooth gameplay and competitive AI. Play now and have fun!
   </p>
 
   <!-- Start Message -->
@@ -49,7 +49,7 @@
       <h3>Controls</h3>
       <p>⬆️ Arrow Up: Move Up</p>
       <p>⬇️ Arrow Down: Move Down</p>
-      <h3>Difficulty</h3>
+      <h3>Difficulty / Modes</h3>
       <p>1️⃣ Press 1 - Easy</p>
       <p>2️⃣ Press 2 - Medium</p>
       <p>3️⃣ Press 3 - Hard</p>
@@ -57,16 +57,17 @@
       <p>5️⃣ Press 5 - Ultra Insane</p>
       <p>6️⃣ Press 6 - Insaniest</p>
       <p>7️⃣ Press 7 - Big Ball</p>
+      <p>9️⃣ Press 9 - Infinite Pong</p>
       <p>8️⃣ Press 8 - Trippy</p>
     </div>
   </div>
 
-  <!-- Firebase SDK (if needed for leaderboard, otherwise can be removed) -->
+  <!-- Firebase SDK (if you plan to use it) can remain or be removed -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // Paste your Firebase config here:
+    // Paste your Firebase config here if needed:
     const firebaseConfig = {
          apiKey: "AIzaSyB-GLAmArdzA_1DVIAX8yKXxFkw7Wwa5dQ",
          authDomain: "pong-leaderboard-79ba7.firebaseapp.com",
@@ -78,45 +79,16 @@
          measurementId: "G-K5PE33HMPF"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
-
-    // Functions for leaderboard (if not using, you can remove these)
-    function submitScore(playerName, score, difficulty) {
-      const scoresRef = ref(database, 'leaderboard/' + Date.now());
-      set(scoresRef, {
-        name: playerName,
-        score: score,
-        difficulty: difficulty
-      });
-    }
-
-    function loadLeaderboard() {
-      const leaderboardRef = ref(database, 'leaderboard');
-      get(leaderboardRef).then((snapshot) => {
-        if (snapshot.exists()) {
-          const scores = Object.values(snapshot.val());
-          scores.sort((a, b) => b.score - a.score);
-          displayLeaderboard(scores);
-        }
-      });
-    }
-
-    function displayLeaderboard(scores) {
-      // Leaderboard display functionality has been removed.
-    }
-
-    window.submitScore = submitScore;
-    window.loadLeaderboard = loadLeaderboard;
-    window.updateLeaderboard = displayLeaderboard;
-
-    document.addEventListener("DOMContentLoaded", loadLeaderboard);
+    
+    // Expose functions if using leaderboard functionality (optional)
+    window.submitScore = function(playerName, score, difficulty) { /* ... */ };
+    window.loadLeaderboard = function() { /* ... */ };
   </script>
 
   <script src="pong.js"></script>
   
-  <!-- Optional: Remove start message on Spacebar press if not handled in pong.js -->
   <script>
     document.addEventListener('keydown', function(event) {
       if (event.code === 'Space') {
