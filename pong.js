@@ -179,7 +179,10 @@ function resetBall() {
 function setDifficulty(level) {
     if (difficulties[level]) {
         aiDifficulty = level;
+        console.log("Difficulty set to: " + aiDifficulty);
         resetGame();
+    } else {
+        console.log("No difficulty level for: " + level);
     }
 }
 
@@ -201,6 +204,7 @@ function resetGame() {
 
 // Handle key events
 function handleKeydown(event) {
+    console.log("Key pressed: " + event.key);
     if (event.key === "ArrowUp") moveUp = true;
     if (event.key === "ArrowDown") moveDown = true;
     if (event.key === " " && !gameStarted) {
@@ -214,7 +218,10 @@ function handleKeydown(event) {
     if (event.key === "3") setDifficulty("Hard");
     if (event.key === "4") setDifficulty("Insane");
     if (event.key === "5") setDifficulty("UltraInsane");
-    if (event.key === "6") setDifficulty("Insaniest"); // Press 6 for Insaniest mode
+    if (event.key === "6") {
+        console.log("Setting difficulty to Insaniest");
+        setDifficulty("Insaniest"); // Press 6 for Insaniest mode
+    }
 }
 
 function handleKeyup(event) {
