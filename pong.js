@@ -463,3 +463,50 @@ document.addEventListener("keyup", handleKeyup);
 
 // Draw the initial screen.
 draw();
+
+// ---- Music Visualizer Code ----
+
+// Create an AudioContext and connect the audio element.
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const audioElement = document.getElementById('bgMusic');
+const track = audioCtx.createMediaElementSource(audioElement);
+const analyser = audioCtx.createAnalyser();
+analyser.fftSize = 64; // Lower size for fewer bars; adjust as needed.
+track.connect(analyser);
+analyser.connect(audioCtx.destination);
+
+const visualizerCanvas = document.getElementById('visualizer');
+const vCtx = visualizerCanvas.getContext('2d');
+const bufferLength = analyser.frequencyBinCount;
+const dataArray = new Uint8Array(bufferLength);
+
+function drawVisualizer() {
+  requestAnimationFrame(drawVisualizer);
+  
+  analyser.getByteFrequencyData(dataArray);
+  
+  // Clear visualizer canvas.
+  vCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+  
+  // Draw background (optional).
+  vCtx.fillStyle = 'rgba(0,0,0,0.3)';
+  vCtx.fillRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+  
+  const barWidth = visualizerCanvas.width / bufferLength;
+  let barHeight;
+  let x = 0;
+  
+  // Draw frequency bars.
+  for (let i = 0; i < bufferLength; i++) {
+    barHeight = dataArray[i] / 2; // Scale height as needed.
+    
+    vCtx.fillStyle = `rgb(${barHeight + 100},50,50)`; // Color can be customized.
+    vCtx.fillRect(x, visualizerCanvas.height - barHeight, barWidth, barHeight);
+    
+    x += barWidth + 1; // 1px gap between bars.
+  }
+}
+
+// Start the visualizer.
+drawVisualizer();
+
