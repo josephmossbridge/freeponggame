@@ -33,8 +33,8 @@ let trippyInterval = 0;
 let extraBalls = [];
 
 // AI Difficulty Levels and Modes
-// "Gravity" mode now includes a gravity value (0.3 per frame)
-// and the AI uses a prediction algorithm with its movement clamped.
+// "Gravity" mode now includes a gravity property (0.3 per frame)
+// and the AI uses a prediction algorithm with clamped movement.
 const difficulties = {
   "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.8 },
   "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
@@ -174,18 +174,18 @@ function moveSingle() {
   
   // AI paddle movement.
   if (aiDifficulty === "Gravity") {
-    // Predict where the ball will be when it reaches the AI paddle.
+    // Predict where the ball will be when it reaches the AI paddle's front edge.
     let targetX = canvas.width - 20 - ballRadius; // AI paddle front edge x
     let tPred = (ballSpeedX > 0) ? (targetX - ballX) / ballSpeedX : 0;
+    // Clamp prediction time to a maximum value (e.g., 60 frames)
+    if (tPred > 60) tPred = 60;
     let g = difficulties["Gravity"].gravity;
     let predictedY = ballY + ballSpeedY * tPred + 0.5 * g * tPred * tPred;
     predictedY = Math.max(ballRadius, Math.min(canvas.height - ballRadius, predictedY));
-    // Compute the difference between predicted ball y and current paddle center.
     let paddleCenter = aiY + paddleHeight / 2;
     let diff = predictedY - paddleCenter;
-    // Calculate desired movement and clamp it to a maximum value so it doesn't jump instantly.
     let desiredMove = diff * difficulties["Gravity"].aiReaction;
-    let maxMove = playerSpeed; // Limit to roughly the player's speed per frame.
+    let maxMove = playerSpeed; // Limit movement per frame
     if (desiredMove > maxMove) desiredMove = maxMove;
     if (desiredMove < -maxMove) desiredMove = -maxMove;
     aiY += desiredMove;
