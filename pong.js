@@ -191,7 +191,6 @@ function moveSingle() {
   
   // AI paddle movement.
   if (aiDifficulty === "Gravity") {
-    // Predict where the ball will be when it reaches the AI paddle's front edge.
     let targetX = canvas.width - 20 - ballRadius;
     let tPred = (ballSpeedX > 0) ? (targetX - ballX) / ballSpeedX : 0;
     if (tPred > 60) tPred = 60;
@@ -322,7 +321,7 @@ function resetBall() {
   }
   
   if (aiDifficulty === "Art") {
-    // Preserve art trail.
+    // In Art mode, preserve the art trail.
   } else {
     artTrail = [];
   }
@@ -342,7 +341,7 @@ function setDifficulty(level) {
     resetGame();
     if (bgMusic) {
       bgMusic.src = "audio/" + audioMapping[aiDifficulty];
-      bgMusic.load(); // Force preload of new audio file.
+      bgMusic.load();
       bgMusic.play().catch(err => console.log("Audio playback error:", err));
     }
   } else {
