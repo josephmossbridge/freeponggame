@@ -33,7 +33,7 @@ let trippyInterval = 0;
 let extraBalls = [];
 
 // AI Difficulty Levels and Modes
-// Added new mode "Gravity" with a gravity property (0.3 per frame)
+// Note: The "Gravity" mode now has an increased aiReaction value (1.0) for better tracking.
 const difficulties = {
   "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.8 },
   "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
@@ -43,7 +43,7 @@ const difficulties = {
   "Insaniest": { aiReaction: 3.0, ballSpeedMultiplier: 4.5 },
   "BigBall": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
   "Trippy": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
-  "Gravity": { aiReaction: 0.6, ballSpeedMultiplier: 1.0, gravity: 0.3 }
+  "Gravity": { aiReaction: 1.0, ballSpeedMultiplier: 1.0, gravity: 0.3 }
 };
 let aiDifficulty = "Medium"; // Default mode
 
@@ -261,7 +261,7 @@ function draw() {
   }
 }
 
-// Reset the ball. In Big Ball mode, the ball remains large. In Gravity mode, we use the Gravity multiplier.
+// Reset the ball. In Big Ball mode, the ball remains large.
 function resetBall() {
   if (aiDifficulty === "BigBall") {
     ballRadius = 40;
