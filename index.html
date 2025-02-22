@@ -69,5 +69,12 @@
   <audio id="bgMusic" src="audio/2.m4a" preload="auto" loop></audio>
   
   <script src="pong.js"></script>
+  <!-- Ensure default mode is set on page load -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // Set default mode to Medium so that its audio loads immediately.
+      setDifficulty("Medium");
+    });
+  </script>
 </body>
 </html>
