@@ -36,6 +36,7 @@
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
+      position: relative;
     }
     
     header {
@@ -67,7 +68,7 @@
       padding: 20px;
     }
     
-    canvas {
+    canvas#gameCanvas {
       background: #000;
       border: 4px solid #fff;
       box-shadow: 0 4px 10px rgba(0,0,0,0.7);
@@ -103,6 +104,19 @@
       text-align: center;
     }
     
+    /* Visualizer styling */
+    #visualizer {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 200px;
+      height: 100px;
+      background: rgba(0,0,0,0.5);
+      border: 2px solid #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.7);
+    }
+    
     /* Responsive adjustments */
     @media (max-width: 768px) {
       .container {
@@ -112,6 +126,10 @@
       
       canvas, .info-box {
         width: 90%;
+      }
+      #visualizer {
+        width: 150px;
+        height: 75px;
       }
     }
   </style>
@@ -150,6 +168,9 @@
       <p>0: Art</p>
     </div>
   </div>
+  
+  <!-- Visualizer canvas -->
+  <canvas id="visualizer"></canvas>
   
   <footer>
     <p>© 2025 Free Pong Game. All rights reserved.</p>
