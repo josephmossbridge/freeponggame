@@ -8,7 +8,7 @@ const audioMapping = {
   "Easy": "1.m4a",
   "Medium": "2.m4a",
   "Hard": "3.m4a",
-  "Insane": { aiReaction: 1.2, ballSpeedMultiplier: 1.7 },
+  "Insane": "4.m4a",
   "UltraInsane": "5.m4a",
   "Insaniest": "6.m4a",
   "BigBall": "7.m4a",
@@ -16,7 +16,6 @@ const audioMapping = {
   "Gravity": "9.m4a",
   "Art": "0.m4a"
 };
-// (Note: In our difficulties object below, we use the same names for modes as keys.)
 
 // Paddle properties
 const paddleWidth = 10;
@@ -53,6 +52,8 @@ let artTrail = [];
 let artHue = 0;
 
 // AI Difficulty Levels and Modes
+// "Gravity" mode now includes a gravity value (0.3 per frame)
+// "Art" mode leaves a persistent rainbow trail.
 const difficulties = {
   "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.8 },
   "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
@@ -122,6 +123,7 @@ function updateExtraBalls() {
 
 // Single-ball movement logic.
 function moveSingle() {
+  // If in Gravity mode, apply gravity each frame.
   if (aiDifficulty === "Gravity") {
     ballSpeedY += difficulties["Gravity"].gravity;
   }
@@ -129,11 +131,13 @@ function moveSingle() {
   ballX += ballSpeedX;
   ballY += ballSpeedY;
   
+  // Bounce off top.
   if (ballY - ballRadius < 0) {
     ballY = ballRadius;
     ballSpeedY *= -1;
   }
   
+  // Bounce off bottom.
   if (ballY + ballRadius > canvas.height) {
     ballY = canvas.height - ballRadius;
     if (aiDifficulty === "Gravity") {
@@ -147,6 +151,7 @@ function moveSingle() {
   let playerPaddleSpeed = playerY - lastPlayerY;
   lastPlayerY = playerY;
   
+  // Collision with player's paddle.
   if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
     ballX = 20 + ballRadius;
     ballSpeedX = Math.abs(ballSpeedX);
@@ -160,6 +165,7 @@ function moveSingle() {
     }
   }
   
+  // Collision with AI paddle.
   if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight) {
     ballX = canvas.width - 20 - ballRadius;
     ballSpeedX = -Math.abs(ballSpeedX);
@@ -172,6 +178,7 @@ function moveSingle() {
     }
   }
   
+  // Scoring: if the ball goes offscreen.
   if (ballX - ballRadius < 0) {
     aiScore++;
     if (aiScore === maxScore) { endGame("lose"); return; }
@@ -182,7 +189,9 @@ function moveSingle() {
     else { pointPause = true; setTimeout(() => { resetBall(); pointPause = false; }, 1000); return; }
   }
   
+  // AI paddle movement.
   if (aiDifficulty === "Gravity") {
+    // Predict where the ball will be when it reaches the AI paddle's front edge.
     let targetX = canvas.width - 20 - ballRadius;
     let tPred = (ballSpeedX > 0) ? (targetX - ballX) / ballSpeedX : 0;
     if (tPred > 60) tPred = 60;
@@ -205,6 +214,7 @@ function moveSingle() {
     }
   }
   
+  // Player paddle movement.
   if (moveUp && playerY > 0) playerY -= playerSpeed;
   if (moveDown && playerY < canvas.height - paddleHeight) playerY += playerSpeed;
   lastPlayerY = playerY;
@@ -312,7 +322,7 @@ function resetBall() {
   }
   
   if (aiDifficulty === "Art") {
-    // In Art mode, preserve the art trail.
+    // Preserve art trail.
   } else {
     artTrail = [];
   }
@@ -332,6 +342,7 @@ function setDifficulty(level) {
     resetGame();
     if (bgMusic) {
       bgMusic.src = "audio/" + audioMapping[aiDifficulty];
+      bgMusic.load(); // Force preload of new audio file.
       bgMusic.play().catch(err => console.log("Audio playback error:", err));
     }
   } else {
