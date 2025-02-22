@@ -10,7 +10,7 @@ let aiY = playerY;
 const playerSpeed = 5;
 let lastPlayerY = playerY;
 
-// Ball properties for single-ball modes
+// Base ball properties for single-ball modes
 const baseBallSpeedX = 6.3, baseBallSpeedY = 6.3;
 let ballSpeedX = 0, ballSpeedY = 0;
 let ballRadius = 8;
@@ -21,7 +21,7 @@ let maxScore = 5; // Default winning score
 let gameOver = false;
 let gameStarted = false;
 
-// Pause flag to delay play between points
+// Pause flag for a 1-second delay between points
 let pointPause = false;
 
 // Variables for Trippy mode effects
@@ -33,7 +33,7 @@ let trippyInterval = 0;
 let extraBalls = [];
 
 // AI Difficulty Levels and Modes
-// Updated multipliers so that "Medium" and "Trippy" modes use a multiplier of 1.0 (full speed).
+// Added new mode "Gravity" with a gravity property (0.3 per frame)
 const difficulties = {
   "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.8 },
   "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
@@ -42,7 +42,8 @@ const difficulties = {
   "UltraInsane": { aiReaction: 2.0, ballSpeedMultiplier: 3.0 },
   "Insaniest": { aiReaction: 3.0, ballSpeedMultiplier: 4.5 },
   "BigBall": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
-  "Trippy": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 }
+  "Trippy": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
+  "Gravity": { aiReaction: 0.6, ballSpeedMultiplier: 1.0, gravity: 0.3 }
 };
 let aiDifficulty = "Medium"; // Default mode
 
@@ -67,7 +68,7 @@ function gameLoop() {
   // Update extra mini balls (for Trippy mode)
   updateExtraBalls();
   
-  // In single-ball mode, if we're in a pause between points, do nothing.
+  // In single-ball mode, if we're in a pause between points, skip movement.
   if (!pointPause) {
     moveSingle();
   }
@@ -91,13 +92,30 @@ function updateExtraBalls() {
 
 // Single-ball movement logic.
 function moveSingle() {
+  // Apply gravity if in Gravity mode.
+  if (aiDifficulty === "Gravity") {
+    ballSpeedY += difficulties["Gravity"].gravity;
+  }
+  
   ballX += ballSpeedX;
   ballY += ballSpeedY;
   
-  // Bounce off top and bottom.
-  if (ballY - ballRadius < 0 || ballY + ballRadius > canvas.height) {
+  // Bounce off top.
+  if (ballY - ballRadius < 0) {
+    ballY = ballRadius;
     ballSpeedY *= -1;
-    ballSpeedX *= 1.1;
+  }
+  
+  // Bounce off bottom.
+  if (ballY + ballRadius > canvas.height) {
+    ballY = canvas.height - ballRadius;
+    if (aiDifficulty === "Gravity") {
+      // Ensure a minimum upward bounce to prevent sticking.
+      ballSpeedY = -Math.max(Math.abs(ballSpeedY) * 1.1, 2);
+    } else {
+      ballSpeedY *= -1;
+      ballSpeedX *= 1.1;
+    }
   }
   
   let playerPaddleSpeed = playerY - lastPlayerY;
@@ -105,6 +123,7 @@ function moveSingle() {
   
   // Collision with player's paddle.
   if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
+    ballX = 20 + ballRadius;
     ballSpeedX = Math.abs(ballSpeedX);
     ballSpeedY += playerPaddleSpeed * 0.5;
     if (aiDifficulty === "UltraInsane") {
@@ -118,6 +137,7 @@ function moveSingle() {
   
   // Collision with AI paddle.
   if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight) {
+    ballX = canvas.width - 20 - ballRadius;
     ballSpeedX = -Math.abs(ballSpeedX);
     if (aiDifficulty === "UltraInsane") {
       ballSpeedX *= 1.2;
@@ -153,7 +173,7 @@ function moveSingle() {
     }
   }
   
-  // AI paddle follows the ball.
+  // AI paddle movement: follow the ball.
   let aiReactionSpeed = difficulties[aiDifficulty].aiReaction;
   if (aiY + paddleHeight / 2 < ballY - 10) {
     aiY += playerSpeed * aiReactionSpeed;
@@ -241,7 +261,7 @@ function draw() {
   }
 }
 
-// Reset the ball. In Big Ball mode, the ball remains large.
+// Reset the ball. In Big Ball mode, the ball remains large. In Gravity mode, we use the Gravity multiplier.
 function resetBall() {
   if (aiDifficulty === "BigBall") {
     ballRadius = 40;
@@ -249,6 +269,13 @@ function resetBall() {
     ballY = canvas.height / 2;
     ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * baseBallSpeedX * difficulties["BigBall"].ballSpeedMultiplier;
     ballSpeedY = (Math.random() * 6 - 3) * difficulties["BigBall"].ballSpeedMultiplier;
+  } else if (aiDifficulty === "Gravity") {
+    ballRadius = 8;
+    let speedMultiplier = difficulties["Gravity"].ballSpeedMultiplier;
+    ballX = canvas.width / 2;
+    ballY = canvas.height / 2;
+    ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * baseBallSpeedX * speedMultiplier;
+    ballSpeedY = (Math.random() * 6 - 3) * speedMultiplier;
   } else {
     ballRadius = 8;
     let speedMultiplier = difficulties[aiDifficulty].ballSpeedMultiplier;
@@ -315,6 +342,10 @@ function handleKeydown(event) {
   if (event.key === "8" || event.key === "Numpad8") {
     console.log("Setting mode to Trippy");
     setDifficulty("Trippy");
+  }
+  if (event.key === "9" || event.key === "Numpad9") {
+    console.log("Setting mode to Gravity");
+    setDifficulty("Gravity");
   }
 }
 
