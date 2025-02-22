@@ -10,7 +10,7 @@ let aiY = playerY;
 const playerSpeed = 5;
 let lastPlayerY = playerY;
 
-// Base ball properties for single-ball modes
+// Ball properties for single-ball modes
 const baseBallSpeedX = 6.3, baseBallSpeedY = 6.3;
 let ballSpeedX = 0, ballSpeedY = 0;
 let ballRadius = 8;
@@ -32,16 +32,17 @@ let trippyInterval = 0;
 // Array for extra mini balls (for Trippy mode)
 let extraBalls = [];
 
-// AI Difficulty Levels and Modes (Infinite mode removed)
+// AI Difficulty Levels and Modes
+// Updated multipliers so that "Medium" and "Trippy" modes use a multiplier of 1.0 (full speed).
 const difficulties = {
-  "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.72 },
-  "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 0.9 },
-  "Hard": { aiReaction: 0.8, ballSpeedMultiplier: 1.17 },
+  "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.8 },
+  "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
+  "Hard": { aiReaction: 0.8, ballSpeedMultiplier: 1.3 },
   "Insane": { aiReaction: 1.2, ballSpeedMultiplier: 1.7 },
   "UltraInsane": { aiReaction: 2.0, ballSpeedMultiplier: 3.0 },
   "Insaniest": { aiReaction: 3.0, ballSpeedMultiplier: 4.5 },
   "BigBall": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
-  "Trippy": { aiReaction: 0.6, ballSpeedMultiplier: 0.9 }
+  "Trippy": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 }
 };
 let aiDifficulty = "Medium"; // Default mode
 
@@ -50,7 +51,7 @@ let moveUp = false, moveDown = false;
 
 // Main game loop
 function gameLoop() {
-  // For Trippy mode, update paddle and ball size effects every 1–3 seconds.
+  // For Trippy mode, update effects every 1–3 seconds.
   if (aiDifficulty === "Trippy") {
     const now = Date.now();
     if (!lastTrippyUpdate || now - lastTrippyUpdate >= trippyInterval) {
@@ -90,7 +91,6 @@ function updateExtraBalls() {
 
 // Single-ball movement logic.
 function moveSingle() {
-  // Update ball position
   ballX += ballSpeedX;
   ballY += ballSpeedY;
   
@@ -153,7 +153,7 @@ function moveSingle() {
     }
   }
   
-  // AI paddle movement: follow the ball.
+  // AI paddle follows the ball.
   let aiReactionSpeed = difficulties[aiDifficulty].aiReaction;
   if (aiY + paddleHeight / 2 < ballY - 10) {
     aiY += playerSpeed * aiReactionSpeed;
@@ -169,7 +169,7 @@ function moveSingle() {
 
 // Draw everything.
 function draw() {
-  // Background: in Trippy mode, use a random rainbow color; otherwise, use a semi-transparent black.
+  // Background: if Trippy mode, use a random rainbow color; otherwise, semi-transparent black.
   if (aiDifficulty === "Trippy") {
     let hue = Math.floor(Math.random() * 360);
     ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.3)`;
@@ -186,7 +186,7 @@ function draw() {
     return;
   }
   
-  // Draw paddles (if in Trippy or Insaniest modes, you could use currentPaddleHeight).
+  // Draw paddles.
   let ph = (aiDifficulty === "Trippy" || aiDifficulty === "Insaniest") ? currentPaddleHeight : paddleHeight;
   ctx.fillStyle = "white";
   ctx.fillRect(10, playerY, paddleWidth, ph);
@@ -326,5 +326,5 @@ function handleKeyup(event) {
 document.addEventListener("keydown", handleKeydown);
 document.addEventListener("keyup", handleKeyup);
 
-// Draw the initial screen.
+// Draw initial screen.
 draw();
