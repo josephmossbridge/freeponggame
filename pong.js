@@ -154,8 +154,8 @@ function moveSingle(playerVel, aiVel) {
   if (ballY + ballRadius > canvas.height) {
     ballY = canvas.height - ballRadius;
     if (aiDifficulty === "Gravity") {
-      // Force a stronger upward bounce by adding extra impulse.
-      ballSpeedY = -(Math.abs(ballSpeedY) + 3);
+      // Use gravitational constant as the extra upward impulse.
+      ballSpeedY = -(Math.abs(ballSpeedY) + difficulties["Gravity"].gravity);
     } else {
       ballSpeedY *= -1;
       ballSpeedX *= 1.1;
