@@ -180,7 +180,7 @@ function moveSingle(newPlayerVelocity, newAiVelocity) {
     ballX = canvas.width - 20 - ballRadius;
     ballSpeedX = -Math.abs(ballSpeedX);
     // Apply spin from AI paddle's velocity.
-    ballSpeedY += newAiVelocity * 3.0;
+    ballSpeedY += newAiVelocity * .8;
     if (aiDifficulty === "UltraInsane") {
       ballSpeedX *= 1.2;
       ballSpeedY *= 1.2;
