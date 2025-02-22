@@ -33,8 +33,8 @@ let trippyInterval = 0;
 let extraBalls = [];
 
 // AI Difficulty Levels and Modes
-// The "Gravity" mode now has a gravity property (0.3 per frame)
-// and the AI will use a prediction algorithm to anticipate where the ball will land.
+// "Gravity" mode now includes a gravity value (0.3 per frame)
+// and the AI uses a prediction algorithm with its movement clamped.
 const difficulties = {
   "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.8 },
   "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
@@ -44,7 +44,7 @@ const difficulties = {
   "Insaniest": { aiReaction: 3.0, ballSpeedMultiplier: 4.5 },
   "BigBall": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
   "Trippy": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
-  "Gravity": { aiReaction: 1.0, ballSpeedMultiplier: 1.0, gravity: 0.3 } // We'll use prediction for AI movement in this mode.
+  "Gravity": { aiReaction: 1.0, ballSpeedMultiplier: 1.0, gravity: 0.3 }
 };
 let aiDifficulty = "Medium"; // Default mode
 
@@ -111,7 +111,7 @@ function moveSingle() {
   if (ballY + ballRadius > canvas.height) {
     ballY = canvas.height - ballRadius;
     if (aiDifficulty === "Gravity") {
-      // Ensure a minimum upward bounce so the ball doesn't get stuck.
+      // Ensure a minimum upward bounce so the ball doesn't stick.
       ballSpeedY = -Math.max(Math.abs(ballSpeedY) * 1.1, 2);
     } else {
       ballSpeedY *= -1;
@@ -174,20 +174,21 @@ function moveSingle() {
   
   // AI paddle movement.
   if (aiDifficulty === "Gravity") {
-    // Instead of simply following the ball's current y, predict where it will be when it reaches the AI paddle.
-    // Calculate the time until the ball reaches the AI paddle's x position.
-    let targetX = canvas.width - 20 - ballRadius; // x position of AI paddle front edge
+    // Predict where the ball will be when it reaches the AI paddle.
+    let targetX = canvas.width - 20 - ballRadius; // AI paddle front edge x
     let tPred = (ballSpeedX > 0) ? (targetX - ballX) / ballSpeedX : 0;
     let g = difficulties["Gravity"].gravity;
-    // Predict the ball's y position at that time using projectile motion.
     let predictedY = ballY + ballSpeedY * tPred + 0.5 * g * tPred * tPred;
-    // Clamp the predicted y to the canvas.
     predictedY = Math.max(ballRadius, Math.min(canvas.height - ballRadius, predictedY));
-    // Move the AI paddle toward the predicted y position.
+    // Compute the difference between predicted ball y and current paddle center.
     let paddleCenter = aiY + paddleHeight / 2;
     let diff = predictedY - paddleCenter;
-    // Use the aiReaction value from Gravity mode for proportional movement.
-    aiY += diff * difficulties["Gravity"].aiReaction;
+    // Calculate desired movement and clamp it to a maximum value so it doesn't jump instantly.
+    let desiredMove = diff * difficulties["Gravity"].aiReaction;
+    let maxMove = playerSpeed; // Limit to roughly the player's speed per frame.
+    if (desiredMove > maxMove) desiredMove = maxMove;
+    if (desiredMove < -maxMove) desiredMove = -maxMove;
+    aiY += desiredMove;
   } else {
     // Regular AI movement: follow the ball's current y.
     let aiReactionSpeed = difficulties[aiDifficulty].aiReaction;
@@ -206,7 +207,7 @@ function moveSingle() {
 
 // Draw everything.
 function draw() {
-  // Background: if Trippy mode, use a random rainbow color; otherwise, semi-transparent black.
+  // Background: if Trippy mode, use a random rainbow color; otherwise, a semi-transparent black.
   if (aiDifficulty === "Trippy") {
     let hue = Math.floor(Math.random() * 360);
     ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.3)`;
@@ -266,7 +267,7 @@ function draw() {
   ctx.textAlign = "center";
   ctx.fillText(`Mode: ${aiDifficulty}`, canvas.width / 2, 30);
   
-  // If game is over, display a message.
+  // Game over message.
   if (gameOver) {
     ctx.fillStyle = "rgba(0,0,0,0.8)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
