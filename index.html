@@ -8,9 +8,22 @@
   <meta name="author" content="Joseph Mossbridge">
   <title>Free Pong Game - Play Online for Free</title>
   <style>
-    body { text-align: center; background: black; color: white; font-family: Arial, sans-serif; }
-    .container { display: flex; justify-content: center; align-items: start; gap: 20px; }
-    canvas { border: 2px solid white; display: block; }
+    body {
+      text-align: center;
+      background: black;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: start;
+      gap: 20px;
+    }
+    canvas {
+      border: 2px solid white;
+      display: block;
+    }
     .info-box {
       text-align: left;
       font-size: 16px;
@@ -30,6 +43,7 @@
   <p>
     Our game features a variety of fun modes including Insaniest and Ultra Insane for endless replayability and intense arcade action. Experience dynamic gameplay with creative visual effects that make every match a unique adventure. Dive into Free Pong Game and enjoy a retro experience with modern, innovative twists!
   </p>
+  
   <div class="container">
     <canvas id="gameCanvas" width="800" height="400"></canvas>
     <div class="info-box">
@@ -47,16 +61,13 @@
       <p>8️⃣ Press 8 - Trippy</p>
       <p>9️⃣ Press 9 - Gravity</p>
       <p>0️⃣ Press 0 - Art</p>
+      <p>M - Mute/Unmute Music</p>
     </div>
   </div>
+  
+  <!-- Audio element for background music (default source can be updated in JS) -->
+  <audio id="bgMusic" src="audio/2.m4a" loop></audio>
+  
   <script src="pong.js"></script>
-  <!-- Optional: Hide any start message if handled by JS -->
-  <script>
-    document.addEventListener('keydown', function(event) {
-      if (event.code === 'Space') {
-        // Hide start message if implemented in JavaScript.
-      }
-    });
-  </script>
 </body>
 </html>
