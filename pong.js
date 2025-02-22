@@ -24,16 +24,16 @@ let playerY = canvas.height / 2 - paddleHeight / 2;
 let aiY = playerY;
 const playerSpeed = 5;
 let lastPlayerY = playerY;
-let lastAiY = aiY;  // NEW: For tracking AI paddle movement (if needed for spin)
+let lastAiY = aiY; // For tracking AI paddle's previous Y
 
-// Base ball properties for single-ball modes
+// Base ball properties
 const baseBallSpeedX = 6.3, baseBallSpeedY = 6.3;
 let ballSpeedX = 0, ballSpeedY = 0;
 let ballRadius = 8;
 
-// Game state variables
+// Game state
 let playerScore = 0, aiScore = 0;
-let maxScore = 5; // Default winning score
+let maxScore = 5;
 let gameOver = false;
 let gameStarted = false;
 let pointPause = false;
@@ -61,7 +61,7 @@ const difficulties = {
   "Gravity": { aiReaction: 1.0, ballSpeedMultiplier: 1.0, gravity: 0.3 },
   "Art": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 }
 };
-let aiDifficulty = "Medium"; // Default mode
+let aiDifficulty = "Medium";
 
 // Player movement tracking
 let moveUp = false, moveDown = false;
@@ -69,7 +69,7 @@ let moveUp = false, moveDown = false;
 // Function to start the game when spacebar is pressed.
 function startGame() {
   if (!gameStarted) {
-    aiDifficulty = "Medium"; // Default mode
+    aiDifficulty = "Medium";
     bgMusic.src = "audio/" + audioMapping["Medium"];
     bgMusic.load();
     bgMusic.play().catch(err => console.log("Audio playback error:", err));
@@ -107,7 +107,7 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-// Art mode: update persistent rainbow trail.
+// Art mode: add current ball position to art trail.
 function updateArtTrail() {
   artHue = (artHue + 2) % 360;
   artTrail.push({ x: ballX, y: ballY, color: `hsl(${artHue}, 100%, 50%)` });
@@ -120,9 +120,7 @@ function updateExtraBalls() {
     b.x += b.vx;
     b.y += b.vy;
     b.alpha -= 0.02;
-    if (b.alpha <= 0) {
-      extraBalls.splice(i, 1);
-    }
+    if (b.alpha <= 0) extraBalls.splice(i, 1);
   }
 }
 
@@ -143,7 +141,7 @@ function moveSingle() {
   if (ballY + ballRadius > canvas.height) {
     ballY = canvas.height - ballRadius;
     if (aiDifficulty === "Gravity") {
-      // Dampen the speed on bounce instead of accelerating it.
+      // Use a damping factor of 0.9 to prevent exponential speedup.
       ballSpeedY = -Math.max(Math.abs(ballSpeedY) * 0.9, 2);
     } else {
       ballSpeedY *= -1;
@@ -158,8 +156,8 @@ function moveSingle() {
   if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
     ballX = 20 + ballRadius;
     ballSpeedX = Math.abs(ballSpeedX);
-    // Add spin from player's paddle movement.
-    ballSpeedY += playerPaddleSpeed * 0.5;
+    // Increase spin multiplier from 0.5 to 1.0 for more noticeable effect.
+    ballSpeedY += playerPaddleSpeed * 1.0;
     if (aiDifficulty === "UltraInsane") {
       ballSpeedX *= 1.2;
       ballSpeedY *= 1.2;
@@ -173,8 +171,8 @@ function moveSingle() {
   if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight) {
     ballX = canvas.width - 20 - ballRadius;
     ballSpeedX = -Math.abs(ballSpeedX);
-    // Add spin from AI paddle movement (using difference between current and previous AI paddle positions).
-    ballSpeedY += (aiY - lastAiY) * 0.5;
+    // Add spin from AI paddle movement. Use the difference between current and previous AI paddle positions.
+    ballSpeedY += (aiY - lastAiY) * 1.0;
     if (aiDifficulty === "UltraInsane") {
       ballSpeedX *= 1.2;
       ballSpeedY *= 1.2;
@@ -219,7 +217,7 @@ function moveSingle() {
     }
   }
   
-  // Update lastAiY after AI paddle moves.
+  // Update lastAiY after AI paddle movement.
   lastAiY = aiY;
   
   // Player movement.
