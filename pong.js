@@ -2,7 +2,7 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// Get audio element and mapping (files should be in an "audio" folder)
+// Get the audio element and mapping (files must be in an "audio" folder)
 const bgMusic = document.getElementById("bgMusic");
 const audioMapping = {
   "Easy": "1.m4a",
@@ -25,12 +25,12 @@ let aiY = playerY;
 const playerSpeed = 5;
 let lastPlayerY = playerY;
 
-// Base ball properties
+// Base ball properties for single-ball modes
 const baseBallSpeedX = 6.3, baseBallSpeedY = 6.3;
 let ballSpeedX = 0, ballSpeedY = 0;
 let ballRadius = 8;
 
-// Game state variables
+// Game state
 let playerScore = 0, aiScore = 0;
 let maxScore = 5;
 let gameOver = false;
@@ -47,7 +47,7 @@ let extraBalls = [];
 let artTrail = [];
 let artHue = 0;
 
-// AI Modes (with "Gravity" and "Art" included)
+// AI modes and difficulties
 const difficulties = {
   "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.8 },
   "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
@@ -60,16 +60,18 @@ const difficulties = {
   "Gravity": { aiReaction: 1.0, ballSpeedMultiplier: 1.0, gravity: 0.3 },
   "Art": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 }
 };
-let aiDifficulty = "Medium";
+let aiDifficulty = "Medium"; // default mode
 
-// Player movement
+// Player movement tracking
 let moveUp = false, moveDown = false;
 
-// Function to start the game (triggered by spacebar)
+// Function to start the game on spacebar press
 function startGame() {
   if (!gameStarted) {
-    setDifficulty("Medium");  // Set default mode
-    // Attempt to play music (user gesture required)
+    // Set default mode to Medium manually.
+    aiDifficulty = "Medium";
+    bgMusic.src = "audio/" + audioMapping["Medium"];
+    bgMusic.load();
     bgMusic.play().catch(err => console.log("Audio playback error:", err));
     gameStarted = true;
     resetBall();
@@ -105,7 +107,7 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-// Art mode: add current ball position to art trail.
+// Art mode: update persistent rainbow trail.
 function updateArtTrail() {
   artHue = (artHue + 2) % 360;
   artTrail.push({ x: ballX, y: ballY, color: `hsl(${artHue}, 100%, 50%)` });
@@ -118,13 +120,11 @@ function updateExtraBalls() {
     b.x += b.vx;
     b.y += b.vy;
     b.alpha -= 0.02;
-    if (b.alpha <= 0) {
-      extraBalls.splice(i, 1);
-    }
+    if (b.alpha <= 0) extraBalls.splice(i, 1);
   }
 }
 
-// Single-ball movement
+// Single-ball movement logic.
 function moveSingle() {
   if (aiDifficulty === "Gravity") {
     ballSpeedY += difficulties["Gravity"].gravity;
@@ -214,7 +214,7 @@ function moveSingle() {
   lastPlayerY = playerY;
 }
 
-// Drawing function.
+// Draw everything.
 function draw() {
   if (aiDifficulty === "Art") {
     ctx.fillStyle = "black";
@@ -291,7 +291,7 @@ function draw() {
   }
 }
 
-// Reset ball based on current mode.
+// Reset the ball.
 function resetBall() {
   if (aiDifficulty === "BigBall") {
     ballRadius = 40;
@@ -320,7 +320,7 @@ function resetBall() {
   }
 }
 
-// Change mode/difficulty, reset game, and update background music.
+// Change mode/difficulty and update background music.
 function setDifficulty(level) {
   if (difficulties[level]) {
     aiDifficulty = level;
@@ -361,9 +361,13 @@ function resetGame() {
 // Function to start the game when spacebar is pressed.
 function startGame() {
   if (!gameStarted) {
+    // Default mode is Medium.
+    aiDifficulty = "Medium";
+    bgMusic.src = "audio/" + audioMapping["Medium"];
+    bgMusic.load();
+    bgMusic.play().catch(err => console.log("Audio playback error:", err));
     gameStarted = true;
     resetBall();
-    bgMusic.play().catch(err => console.log("Audio playback error:", err));
     gameLoop();
   }
 }
@@ -376,7 +380,7 @@ function handleKeydown(event) {
   }
   if (event.key === "ArrowUp") moveUp = true;
   if (event.key === "ArrowDown") moveDown = true;
-  // Use event.key, event.code, or keyCode for spacebar.
+  // Check for spacebar using key, code, or keyCode 32.
   if ((event.key === " " || event.code === "Space" || event.keyCode === 32) && !gameStarted) {
     startGame();
   }
@@ -418,5 +422,5 @@ function handleKeyup(event) {
 document.addEventListener("keydown", handleKeydown);
 document.addEventListener("keyup", handleKeyup);
 
-// Draw the initial screen.
+// Draw initial screen.
 draw();
