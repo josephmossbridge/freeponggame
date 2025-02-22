@@ -23,10 +23,11 @@ const paddleHeight = 80;
 let playerY = canvas.height / 2 - paddleHeight / 2;
 let aiY = playerY;
 const playerSpeed = 5;
-let lastPlayerY = playerY;
-let lastAiY = aiY; // For tracking AI paddle's previous Y
+// We'll track paddle velocity explicitly.
+let playerVelocity = 0;
+let aiVelocity = 0;
 
-// Base ball properties
+// Base ball properties for single-ball modes
 const baseBallSpeedX = 6.3, baseBallSpeedY = 6.3;
 let ballSpeedX = 0, ballSpeedY = 0;
 let ballRadius = 8;
@@ -81,6 +82,16 @@ function startGame() {
 
 // Main game loop
 function gameLoop() {
+  // Update paddle velocities
+  // (Assumes that last positions are stored globally)
+  // For the player:
+  let newPlayerVelocity = playerY - playerVelocity; // Actually, difference since last frame.
+  playerVelocity = playerY; // Update for next frame.
+  
+  // For the AI, we do similar:
+  let newAiVelocity = aiY - aiVelocity;
+  aiVelocity = aiY;
+  
   if (aiDifficulty === "Trippy") {
     const now = Date.now();
     if (!lastTrippyUpdate || now - lastTrippyUpdate >= trippyInterval) {
@@ -100,20 +111,20 @@ function gameLoop() {
   updateExtraBalls();
   
   if (!pointPause) {
-    moveSingle();
+    moveSingle(newPlayerVelocity, newAiVelocity);
   }
   
   draw();
   requestAnimationFrame(gameLoop);
 }
 
-// Art mode: add current ball position to art trail.
+// In Art mode, add the current ball position to the art trail.
 function updateArtTrail() {
   artHue = (artHue + 2) % 360;
   artTrail.push({ x: ballX, y: ballY, color: `hsl(${artHue}, 100%, 50%)` });
 }
 
-// Trippy mode: update extra mini balls.
+// Update extra mini balls for Trippy mode.
 function updateExtraBalls() {
   for (let i = extraBalls.length - 1; i >= 0; i--) {
     let b = extraBalls[i];
@@ -125,7 +136,8 @@ function updateExtraBalls() {
 }
 
 // Single-ball movement logic.
-function moveSingle() {
+// Accepts newPlayerVelocity and newAiVelocity as parameters.
+function moveSingle(newPlayerVelocity, newAiVelocity) {
   if (aiDifficulty === "Gravity") {
     ballSpeedY += difficulties["Gravity"].gravity;
   }
@@ -141,7 +153,6 @@ function moveSingle() {
   if (ballY + ballRadius > canvas.height) {
     ballY = canvas.height - ballRadius;
     if (aiDifficulty === "Gravity") {
-      // Use a damping factor of 0.9 to prevent exponential speedup.
       ballSpeedY = -Math.max(Math.abs(ballSpeedY) * 0.9, 2);
     } else {
       ballSpeedY *= -1;
@@ -149,15 +160,12 @@ function moveSingle() {
     }
   }
   
-  let playerPaddleSpeed = playerY - lastPlayerY;
-  lastPlayerY = playerY;
-  
   // Collision with player's paddle.
   if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
     ballX = 20 + ballRadius;
     ballSpeedX = Math.abs(ballSpeedX);
-    // Increase spin multiplier from 0.5 to 1.0 for more noticeable effect.
-    ballSpeedY += playerPaddleSpeed * 1.0;
+    // Apply spin: use the player's paddle velocity multiplied by 3.0.
+    ballSpeedY += newPlayerVelocity * 3.0;
     if (aiDifficulty === "UltraInsane") {
       ballSpeedX *= 1.2;
       ballSpeedY *= 1.2;
@@ -171,8 +179,8 @@ function moveSingle() {
   if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight) {
     ballX = canvas.width - 20 - ballRadius;
     ballSpeedX = -Math.abs(ballSpeedX);
-    // Add spin from AI paddle movement. Use the difference between current and previous AI paddle positions.
-    ballSpeedY += (aiY - lastAiY) * 1.0;
+    // Apply spin from AI paddle's velocity.
+    ballSpeedY += newAiVelocity * 3.0;
     if (aiDifficulty === "UltraInsane") {
       ballSpeedX *= 1.2;
       ballSpeedY *= 1.2;
@@ -193,7 +201,6 @@ function moveSingle() {
     else { pointPause = true; setTimeout(() => { resetBall(); pointPause = false; }, 1000); return; }
   }
   
-  // AI paddle movement.
   if (aiDifficulty === "Gravity") {
     let targetX = canvas.width - 20 - ballRadius;
     let tPred = (ballSpeedX > 0) ? (targetX - ballX) / ballSpeedX : 0;
@@ -217,9 +224,6 @@ function moveSingle() {
     }
   }
   
-  // Update lastAiY after AI paddle movement.
-  lastAiY = aiY;
-  
   // Player movement.
   let effectivePlayerSpeed = playerSpeed;
   if (aiDifficulty === "UltraInsane" || aiDifficulty === "Insaniest") {
@@ -227,7 +231,6 @@ function moveSingle() {
   }
   if (moveUp && playerY > 0) playerY -= effectivePlayerSpeed;
   if (moveDown && playerY < canvas.height - paddleHeight) playerY += effectivePlayerSpeed;
-  lastPlayerY = playerY;
 }
 
 // Drawing function.
@@ -246,7 +249,6 @@ function draw() {
     ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.3)`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   } else {
-    // Clear canvas completely with opaque black.
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
