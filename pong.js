@@ -52,7 +52,7 @@ let artTrail = [];
 let artHue = 0;
 
 // AI Difficulty Levels and Modes
-// "Gravity" mode now includes a gravity value (0.3 per frame)
+// "Gravity" mode includes a gravity value (0.3 per frame)
 // "Art" mode leaves a persistent rainbow trail.
 const difficulties = {
   "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.8 },
@@ -77,9 +77,9 @@ function gameLoop() {
   if (aiDifficulty === "Trippy") {
     const now = Date.now();
     if (!lastTrippyUpdate || now - lastTrippyUpdate >= trippyInterval) {
-      currentPaddleHeight = 30 + Math.random() * 170; // Between 30 and 200
-      ballRadius = 8 + Math.random() * 32; // Between 8 and 40
-      trippyInterval = 1000 + Math.random() * 2000; // 1–3 seconds
+      currentPaddleHeight = 30 + Math.random() * 170; // 30 to 200
+      ballRadius = 8 + Math.random() * 32; // 8 to 40
+      trippyInterval = 1000 + Math.random() * 2000; // 1 to 3 seconds
       lastTrippyUpdate = now;
     }
   } else {
@@ -123,7 +123,6 @@ function updateExtraBalls() {
 
 // Single-ball movement logic.
 function moveSingle() {
-  // If in Gravity mode, apply gravity each frame.
   if (aiDifficulty === "Gravity") {
     ballSpeedY += difficulties["Gravity"].gravity;
   }
@@ -131,13 +130,11 @@ function moveSingle() {
   ballX += ballSpeedX;
   ballY += ballSpeedY;
   
-  // Bounce off top.
   if (ballY - ballRadius < 0) {
     ballY = ballRadius;
     ballSpeedY *= -1;
   }
   
-  // Bounce off bottom.
   if (ballY + ballRadius > canvas.height) {
     ballY = canvas.height - ballRadius;
     if (aiDifficulty === "Gravity") {
@@ -151,7 +148,6 @@ function moveSingle() {
   let playerPaddleSpeed = playerY - lastPlayerY;
   lastPlayerY = playerY;
   
-  // Collision with player's paddle.
   if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
     ballX = 20 + ballRadius;
     ballSpeedX = Math.abs(ballSpeedX);
@@ -165,7 +161,6 @@ function moveSingle() {
     }
   }
   
-  // Collision with AI paddle.
   if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight) {
     ballX = canvas.width - 20 - ballRadius;
     ballSpeedX = -Math.abs(ballSpeedX);
@@ -178,7 +173,6 @@ function moveSingle() {
     }
   }
   
-  // Scoring: if the ball goes offscreen.
   if (ballX - ballRadius < 0) {
     aiScore++;
     if (aiScore === maxScore) { endGame("lose"); return; }
@@ -189,9 +183,7 @@ function moveSingle() {
     else { pointPause = true; setTimeout(() => { resetBall(); pointPause = false; }, 1000); return; }
   }
   
-  // AI paddle movement.
   if (aiDifficulty === "Gravity") {
-    // Predict where the ball will be when it reaches the AI paddle's front edge.
     let targetX = canvas.width - 20 - ballRadius;
     let tPred = (ballSpeedX > 0) ? (targetX - ballX) / ballSpeedX : 0;
     if (tPred > 60) tPred = 60;
@@ -214,7 +206,6 @@ function moveSingle() {
     }
   }
   
-  // Player paddle movement.
   if (moveUp && playerY > 0) playerY -= playerSpeed;
   if (moveDown && playerY < canvas.height - paddleHeight) playerY += playerSpeed;
   lastPlayerY = playerY;
@@ -322,7 +313,7 @@ function resetBall() {
   }
   
   if (aiDifficulty === "Art") {
-    // Preserve art trail.
+    // In Art mode, preserve the art trail.
   } else {
     artTrail = [];
   }
@@ -342,7 +333,7 @@ function setDifficulty(level) {
     resetGame();
     if (bgMusic) {
       bgMusic.src = "audio/" + audioMapping[aiDifficulty];
-      bgMusic.load(); // Force preload of new audio file.
+      bgMusic.load();
       bgMusic.play().catch(err => console.log("Audio playback error:", err));
     }
   } else {
@@ -374,12 +365,15 @@ function handleKeydown(event) {
   }
   if (event.key === "ArrowUp") moveUp = true;
   if (event.key === "ArrowDown") moveDown = true;
-  if (event.key === " " && !gameStarted) {
+  // Check for spacebar using event.key, event.code, or keyCode 32.
+  if ((event.key === " " || event.code === "Space" || event.keyCode === 32) && !gameStarted) {
     gameStarted = true;
     resetBall();
     gameLoop();
   }
-  if (event.key === " " && gameOver) resetGame();
+  if ((event.key === " " || event.code === "Space" || event.keyCode === 32) && gameOver) {
+    resetGame();
+  }
   if (event.key === "1") setDifficulty("Easy");
   if (event.key === "2") setDifficulty("Medium");
   if (event.key === "3") setDifficulty("Hard");
