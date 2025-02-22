@@ -140,9 +140,7 @@ function updateExtraBalls() {
 }
 
 // Single-ball movement logic.
-// Accepts playerVel (from key events) and aiVel (computed from previous frame).
 function moveSingle(playerVel, aiVel) {
-  // Gravity mode: apply gravity acceleration.
   if (aiDifficulty === "Gravity") {
     ballSpeedY += difficulties["Gravity"].gravity;
   }
@@ -150,13 +148,11 @@ function moveSingle(playerVel, aiVel) {
   ballX += ballSpeedX;
   ballY += ballSpeedY;
   
-  // Bounce off top.
   if (ballY - ballRadius < 0) {
     ballY = ballRadius;
     ballSpeedY = Math.abs(ballSpeedY);
   }
   
-  // Bounce off bottom.
   if (ballY + ballRadius > canvas.height) {
     ballY = canvas.height - ballRadius;
     if (aiDifficulty === "Gravity") {
@@ -167,7 +163,6 @@ function moveSingle(playerVel, aiVel) {
     }
   }
   
-  // Collision with player's paddle.
   if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
     ballX = 20 + ballRadius;
     ballSpeedX = Math.abs(ballSpeedX);
@@ -181,7 +176,6 @@ function moveSingle(playerVel, aiVel) {
     }
   }
   
-  // Collision with AI paddle.
   if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight) {
     ballX = canvas.width - 20 - ballRadius;
     ballSpeedX = -Math.abs(ballSpeedX);
@@ -195,7 +189,6 @@ function moveSingle(playerVel, aiVel) {
     }
   }
   
-  // Scoring.
   if (ballX - ballRadius < 0) {
     aiScore++;
     if (aiScore === maxScore) { endGame("lose"); return; }
@@ -206,7 +199,6 @@ function moveSingle(playerVel, aiVel) {
     else { pointPause = true; setTimeout(() => { resetBall(); pointPause = false; }, 1000); return; }
   }
   
-  // AI paddle movement.
   if (aiDifficulty === "Gravity") {
     let targetX = canvas.width - 20 - ballRadius;
     let tPred = (ballSpeedX > 0) ? (targetX - ballX) / ballSpeedX : 0;
@@ -230,7 +222,6 @@ function moveSingle(playerVel, aiVel) {
     }
   }
   
-  // Player movement.
   let effectivePlayerSpeed = playerSpeed;
   if (aiDifficulty === "UltraInsane" || aiDifficulty === "Insaniest") {
     effectivePlayerSpeed = playerSpeed * 1.5;
@@ -241,8 +232,16 @@ function moveSingle(playerVel, aiVel) {
 
 // Modernized drawing function.
 function draw() {
-  // Clear canvas.
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // If game hasn't started, display the start message.
+  if (!gameStarted) {
+    ctx.fillStyle = "#fff";
+    ctx.font = "30px Roboto";
+    ctx.textAlign = "center";
+    ctx.fillText("Press SPACEBAR to Start", canvas.width / 2, canvas.height / 2);
+    return;
+  }
   
   if (aiDifficulty === "Art") {
     ctx.fillStyle = "black";
@@ -265,34 +264,33 @@ function draw() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
   
-  // Draw paddles with gradients and shadows.
   ctx.save();
   ctx.shadowColor = "rgba(0,0,0,0.5)";
   ctx.shadowBlur = 10;
   
-  // Player paddle: green gradient.
-  let paddleGradient = ctx.createLinearGradient(0, playerY, 0, playerY + paddleHeight);
+  // Player paddle with randomized height in Trippy mode.
+  let paddleH = (aiDifficulty === "Trippy" ? currentPaddleHeight : paddleHeight);
+  let paddleGradient = ctx.createLinearGradient(0, playerY, 0, playerY + paddleH);
   paddleGradient.addColorStop(0, "#4CAF50");
   paddleGradient.addColorStop(1, "#2E7D32");
   ctx.fillStyle = paddleGradient;
-  // Use currentPaddleHeight in Trippy mode.
-  ctx.fillRect(10, playerY, paddleWidth, (aiDifficulty === "Trippy" ? currentPaddleHeight : paddleHeight));
+  ctx.fillRect(10, playerY, paddleWidth, paddleH);
   
-  // AI paddle: red gradient.
-  let aiPaddleGradient = ctx.createLinearGradient(0, aiY, 0, aiY + paddleHeight);
+  // AI paddle.
+  let aiPaddleGradient = ctx.createLinearGradient(0, aiY, 0, aiY + paddleH);
   aiPaddleGradient.addColorStop(0, "#F44336");
   aiPaddleGradient.addColorStop(1, "#B71C1C");
   ctx.fillStyle = aiPaddleGradient;
-  ctx.fillRect(canvas.width - 20, aiY, paddleWidth, (aiDifficulty === "Trippy" ? currentPaddleHeight : paddleHeight));
+  ctx.fillRect(canvas.width - 20, aiY, paddleWidth, paddleH);
   ctx.restore();
   
-  // Draw the ball as a solid white circle.
+  // Draw the ball (solid white circle).
   ctx.fillStyle = "white";
   ctx.beginPath();
   ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
   ctx.fill();
   
-  // Draw extra mini balls for Trippy mode.
+  // Extra mini balls for Trippy mode.
   if (aiDifficulty === "Trippy") {
     extraBalls.forEach(b => {
       ctx.fillStyle = `rgba(255,255,255,${b.alpha.toFixed(2)})`;
