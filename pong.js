@@ -32,6 +32,7 @@ let lastAiY = aiY;
 const baseBallSpeedX = 6.3, baseBallSpeedY = 6.3;
 let ballSpeedX = 0, ballSpeedY = 0;
 let ballRadius = 8;
+let ballX = canvas.width / 2, ballY = canvas.height / 2;
 
 // Game state
 let playerScore = 0, aiScore = 0;
@@ -104,7 +105,6 @@ function gameLoop() {
   updateExtraBalls();
   
   if (!pointPause) {
-    // Pass the current player's velocity and the AI paddle's velocity.
     // For AI, compute velocity as difference since last frame.
     let aiVelocity = aiY - lastAiY;
     moveSingle(playerVelocity, aiVelocity);
@@ -136,6 +136,7 @@ function updateExtraBalls() {
 // Single-ball movement logic.
 // Accepts playerVel (from key events) and aiVel (computed from previous frame).
 function moveSingle(playerVel, aiVel) {
+  // Gravity mode: apply gravity acceleration.
   if (aiDifficulty === "Gravity") {
     ballSpeedY += difficulties["Gravity"].gravity;
   }
@@ -146,15 +147,15 @@ function moveSingle(playerVel, aiVel) {
   // Bounce off top.
   if (ballY - ballRadius < 0) {
     ballY = ballRadius;
-    ballSpeedY *= -1;
+    ballSpeedY = Math.abs(ballSpeedY);
   }
   
   // Bounce off bottom.
   if (ballY + ballRadius > canvas.height) {
     ballY = canvas.height - ballRadius;
     if (aiDifficulty === "Gravity") {
-      // Instead of exponential acceleration, bounce up with a fixed modest speed.
-      ballSpeedY = -2;
+      // Bounce upward with at least a speed of 2.
+      ballSpeedY = -Math.max(2, Math.abs(ballSpeedY));
     } else {
       ballSpeedY *= -1;
       ballSpeedX *= 1.1;
@@ -165,7 +166,7 @@ function moveSingle(playerVel, aiVel) {
   if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
     ballX = 20 + ballRadius;
     ballSpeedX = Math.abs(ballSpeedX);
-    // Apply spin: add player's velocity multiplied by a smaller factor.
+    // Apply spin: adjust ball's vertical speed by player's paddle velocity.
     ballSpeedY += playerVel * 0.3;
     if (aiDifficulty === "UltraInsane") {
       ballSpeedX *= 1.2;
@@ -410,7 +411,7 @@ function handleKeydown(event) {
     setDifficulty("Insaniest");
   }
   if (event.key === "7" || event.key === "Numpad7") {
-    console.log("Setting mode to Big Ball");
+    console.log("Setting mode to BigBall");
     setDifficulty("BigBall");
   }
   if (event.key === "8" || event.key === "Numpad8") {
