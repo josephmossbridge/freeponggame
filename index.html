@@ -19,16 +19,6 @@
       background: #222;
       max-width: 200px;
     }
-    #startMessage {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 24px;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 10px 20px;
-      border: 2px solid white;
-    }
   </style>
 </head>
 <body>
@@ -41,9 +31,6 @@
   <p>
     Our game now features even more fun modes including Insaniest and Ultra Insane, providing endless replayability and intense arcade action. Experience dynamic gameplay with creative visual effects that make every match a unique adventure. Dive into the world of Free Pong Game and enjoy a retro experience with modern, innovative twists!
   </p>
-
-  <!-- Start Message -->
-  <div id="startMessage">Press SPACEBAR to Start</div>
 
   <div class="container">
     <canvas id="gameCanvas" width="800" height="400"></canvas>
@@ -65,14 +52,5 @@
   </div>
 
   <script src="pong.js"></script>
-  
-  <!-- Optional: Hide start message on Spacebar press -->
-  <script>
-    document.addEventListener('keydown', function(event) {
-      if (event.code === 'Space') {
-        document.getElementById('startMessage').style.display = 'none';
-      }
-    });
-  </script>
 </body>
 </html>
