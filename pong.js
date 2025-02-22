@@ -2,7 +2,7 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// Get reference to the audio element and define mapping of modes to audio files.
+// Get audio element and mapping (files should be in an "audio" folder)
 const bgMusic = document.getElementById("bgMusic");
 const audioMapping = {
   "Easy": "1.m4a",
@@ -25,33 +25,29 @@ let aiY = playerY;
 const playerSpeed = 5;
 let lastPlayerY = playerY;
 
-// Base ball properties for single-ball modes
+// Base ball properties
 const baseBallSpeedX = 6.3, baseBallSpeedY = 6.3;
 let ballSpeedX = 0, ballSpeedY = 0;
 let ballRadius = 8;
 
-// Scoring & game state
+// Game state variables
 let playerScore = 0, aiScore = 0;
-let maxScore = 5; // Default winning score
+let maxScore = 5;
 let gameOver = false;
 let gameStarted = false;
-
-// Pause flag for a 1-second delay between points
 let pointPause = false;
 
-// Variables for Trippy mode effects
+// Trippy mode variables
 let currentPaddleHeight = paddleHeight;
 let lastTrippyUpdate = 0;
 let trippyInterval = 0;
-
-// Array for extra mini balls (for Trippy mode)
 let extraBalls = [];
 
-// Global variables for Art mode trail
+// Art mode variables
 let artTrail = [];
 let artHue = 0;
 
-// AI Difficulty Levels and Modes
+// AI Modes (with "Gravity" and "Art" included)
 const difficulties = {
   "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.8 },
   "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
@@ -64,17 +60,16 @@ const difficulties = {
   "Gravity": { aiReaction: 1.0, ballSpeedMultiplier: 1.0, gravity: 0.3 },
   "Art": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 }
 };
-let aiDifficulty = "Medium"; // Default mode
+let aiDifficulty = "Medium";
 
-// Player movement tracking
+// Player movement
 let moveUp = false, moveDown = false;
 
-// Function to start the game
+// Function to start the game (triggered by spacebar)
 function startGame() {
   if (!gameStarted) {
-    // Set default mode to Medium and load its audio.
-    setDifficulty("Medium");
-    // Start the background music.
+    setDifficulty("Medium");  // Set default mode
+    // Attempt to play music (user gesture required)
     bgMusic.play().catch(err => console.log("Audio playback error:", err));
     gameStarted = true;
     resetBall();
@@ -84,25 +79,22 @@ function startGame() {
 
 // Main game loop
 function gameLoop() {
-  // For Trippy mode, update effects every 1–3 seconds.
   if (aiDifficulty === "Trippy") {
     const now = Date.now();
     if (!lastTrippyUpdate || now - lastTrippyUpdate >= trippyInterval) {
-      currentPaddleHeight = 30 + Math.random() * 170; // 30 to 200
-      ballRadius = 8 + Math.random() * 32; // 8 to 40
-      trippyInterval = 1000 + Math.random() * 2000; // 1 to 3 seconds
+      currentPaddleHeight = 30 + Math.random() * 170;
+      ballRadius = 8 + Math.random() * 32;
+      trippyInterval = 1000 + Math.random() * 2000;
       lastTrippyUpdate = now;
     }
   } else {
     currentPaddleHeight = paddleHeight;
   }
   
-  // For Art mode, update the persistent rainbow trail.
   if (aiDifficulty === "Art") {
     updateArtTrail();
   }
   
-  // Update extra mini balls (for Trippy mode)
   updateExtraBalls();
   
   if (!pointPause) {
@@ -113,13 +105,13 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-// In Art mode, add the current ball position to the art trail.
+// Art mode: add current ball position to art trail.
 function updateArtTrail() {
   artHue = (artHue + 2) % 360;
   artTrail.push({ x: ballX, y: ballY, color: `hsl(${artHue}, 100%, 50%)` });
 }
 
-// Update extra mini balls: move them and fade them out.
+// Trippy mode: update extra mini balls.
 function updateExtraBalls() {
   for (let i = extraBalls.length - 1; i >= 0; i--) {
     let b = extraBalls[i];
@@ -132,7 +124,7 @@ function updateExtraBalls() {
   }
 }
 
-// Single-ball movement logic.
+// Single-ball movement
 function moveSingle() {
   if (aiDifficulty === "Gravity") {
     ballSpeedY += difficulties["Gravity"].gravity;
@@ -222,7 +214,7 @@ function moveSingle() {
   lastPlayerY = playerY;
 }
 
-// Draw everything.
+// Drawing function.
 function draw() {
   if (aiDifficulty === "Art") {
     ctx.fillStyle = "black";
@@ -299,7 +291,7 @@ function draw() {
   }
 }
 
-// Reset the ball. In Big Ball mode, the ball remains large.
+// Reset ball based on current mode.
 function resetBall() {
   if (aiDifficulty === "BigBall") {
     ballRadius = 40;
@@ -323,14 +315,12 @@ function resetBall() {
     ballSpeedY = (Math.random() * 6 - 3) * speedMultiplier;
   }
   
-  if (aiDifficulty === "Art") {
-    // In Art mode, preserve the art trail.
-  } else {
+  if (aiDifficulty !== "Art") {
     artTrail = [];
   }
 }
 
-// Change mode/difficulty and reset the game. Also update background music.
+// Change mode/difficulty, reset game, and update background music.
 function setDifficulty(level) {
   if (difficulties[level]) {
     aiDifficulty = level;
@@ -373,7 +363,6 @@ function startGame() {
   if (!gameStarted) {
     gameStarted = true;
     resetBall();
-    // Try playing the music (user gesture should allow it)
     bgMusic.play().catch(err => console.log("Audio playback error:", err));
     gameLoop();
   }
@@ -387,7 +376,7 @@ function handleKeydown(event) {
   }
   if (event.key === "ArrowUp") moveUp = true;
   if (event.key === "ArrowDown") moveDown = true;
-  // Check for spacebar using key, code, or keyCode 32.
+  // Use event.key, event.code, or keyCode for spacebar.
   if ((event.key === " " || event.code === "Space" || event.keyCode === 32) && !gameStarted) {
     startGame();
   }
@@ -429,5 +418,5 @@ function handleKeyup(event) {
 document.addEventListener("keydown", handleKeydown);
 document.addEventListener("keyup", handleKeyup);
 
-// Draw initial screen.
+// Draw the initial screen.
 draw();
