@@ -33,7 +33,8 @@ let trippyInterval = 0;
 let extraBalls = [];
 
 // AI Difficulty Levels and Modes
-// Note: The "Gravity" mode now has an increased aiReaction value (1.0) for better tracking.
+// The "Gravity" mode now has a gravity property (0.3 per frame)
+// and the AI will use a prediction algorithm to anticipate where the ball will land.
 const difficulties = {
   "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.8 },
   "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
@@ -43,7 +44,7 @@ const difficulties = {
   "Insaniest": { aiReaction: 3.0, ballSpeedMultiplier: 4.5 },
   "BigBall": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
   "Trippy": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
-  "Gravity": { aiReaction: 1.0, ballSpeedMultiplier: 1.0, gravity: 0.3 }
+  "Gravity": { aiReaction: 1.0, ballSpeedMultiplier: 1.0, gravity: 0.3 } // We'll use prediction for AI movement in this mode.
 };
 let aiDifficulty = "Medium"; // Default mode
 
@@ -68,7 +69,7 @@ function gameLoop() {
   // Update extra mini balls (for Trippy mode)
   updateExtraBalls();
   
-  // In single-ball mode, if we're in a pause between points, skip movement.
+  // Only update ball movement if not in pause between points.
   if (!pointPause) {
     moveSingle();
   }
@@ -92,7 +93,7 @@ function updateExtraBalls() {
 
 // Single-ball movement logic.
 function moveSingle() {
-  // Apply gravity if in Gravity mode.
+  // If in Gravity mode, apply gravity each frame.
   if (aiDifficulty === "Gravity") {
     ballSpeedY += difficulties["Gravity"].gravity;
   }
@@ -110,7 +111,7 @@ function moveSingle() {
   if (ballY + ballRadius > canvas.height) {
     ballY = canvas.height - ballRadius;
     if (aiDifficulty === "Gravity") {
-      // Ensure a minimum upward bounce to prevent sticking.
+      // Ensure a minimum upward bounce so the ball doesn't get stuck.
       ballSpeedY = -Math.max(Math.abs(ballSpeedY) * 1.1, 2);
     } else {
       ballSpeedY *= -1;
@@ -153,32 +154,48 @@ function moveSingle() {
     aiScore++;
     if (aiScore === maxScore) {
       endGame("lose");
+      return;
     } else {
       pointPause = true;
-      setTimeout(() => {
-        resetBall();
-        pointPause = false;
-      }, 1000);
+      setTimeout(() => { resetBall(); pointPause = false; }, 1000);
+      return;
     }
   } else if (ballX + ballRadius > canvas.width) {
     playerScore++;
     if (playerScore === maxScore) {
       endGame("win");
+      return;
     } else {
       pointPause = true;
-      setTimeout(() => {
-        resetBall();
-        pointPause = false;
-      }, 1000);
+      setTimeout(() => { resetBall(); pointPause = false; }, 1000);
+      return;
     }
   }
   
-  // AI paddle movement: follow the ball.
-  let aiReactionSpeed = difficulties[aiDifficulty].aiReaction;
-  if (aiY + paddleHeight / 2 < ballY - 10) {
-    aiY += playerSpeed * aiReactionSpeed;
-  } else if (aiY + paddleHeight / 2 > ballY + 10) {
-    aiY -= playerSpeed * aiReactionSpeed;
+  // AI paddle movement.
+  if (aiDifficulty === "Gravity") {
+    // Instead of simply following the ball's current y, predict where it will be when it reaches the AI paddle.
+    // Calculate the time until the ball reaches the AI paddle's x position.
+    let targetX = canvas.width - 20 - ballRadius; // x position of AI paddle front edge
+    let tPred = (ballSpeedX > 0) ? (targetX - ballX) / ballSpeedX : 0;
+    let g = difficulties["Gravity"].gravity;
+    // Predict the ball's y position at that time using projectile motion.
+    let predictedY = ballY + ballSpeedY * tPred + 0.5 * g * tPred * tPred;
+    // Clamp the predicted y to the canvas.
+    predictedY = Math.max(ballRadius, Math.min(canvas.height - ballRadius, predictedY));
+    // Move the AI paddle toward the predicted y position.
+    let paddleCenter = aiY + paddleHeight / 2;
+    let diff = predictedY - paddleCenter;
+    // Use the aiReaction value from Gravity mode for proportional movement.
+    aiY += diff * difficulties["Gravity"].aiReaction;
+  } else {
+    // Regular AI movement: follow the ball's current y.
+    let aiReactionSpeed = difficulties[aiDifficulty].aiReaction;
+    if (aiY + paddleHeight / 2 < ballY - 10) {
+      aiY += playerSpeed * aiReactionSpeed;
+    } else if (aiY + paddleHeight / 2 > ballY + 10) {
+      aiY -= playerSpeed * aiReactionSpeed;
+    }
   }
   
   // Player paddle movement.
@@ -249,7 +266,7 @@ function draw() {
   ctx.textAlign = "center";
   ctx.fillText(`Mode: ${aiDifficulty}`, canvas.width / 2, 30);
   
-  // Game over message.
+  // If game is over, display a message.
   if (gameOver) {
     ctx.fillStyle = "rgba(0,0,0,0.8)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
