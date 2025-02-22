@@ -52,7 +52,7 @@ let artTrail = [];
 let artHue = 0;
 
 // AI Difficulty Levels and Modes
-// "Gravity" mode now includes a gravity value (0.3 per frame)
+// "Gravity" mode includes a gravity value (0.3 per frame)
 // "Art" mode leaves a persistent rainbow trail.
 const difficulties = {
   "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.8 },
@@ -191,6 +191,7 @@ function moveSingle() {
   
   // AI paddle movement.
   if (aiDifficulty === "Gravity") {
+    // Predict where the ball will be when it reaches the AI paddle's front edge.
     let targetX = canvas.width - 20 - ballRadius;
     let tPred = (ballSpeedX > 0) ? (targetX - ballX) / ballSpeedX : 0;
     if (tPred > 60) tPred = 60;
@@ -373,12 +374,13 @@ function handleKeydown(event) {
   }
   if (event.key === "ArrowUp") moveUp = true;
   if (event.key === "ArrowDown") moveDown = true;
-  if (event.key === " " && !gameStarted) {
+  // Check for spacebar using either event.key or event.code for compatibility.
+  if ((event.key === " " || event.code === "Space") && !gameStarted) {
     gameStarted = true;
     resetBall();
     gameLoop();
   }
-  if (event.key === " " && gameOver) resetGame();
+  if ((event.key === " " || event.code === "Space") && gameOver) resetGame();
   if (event.key === "1") setDifficulty("Easy");
   if (event.key === "2") setDifficulty("Medium");
   if (event.key === "3") setDifficulty("Hard");
