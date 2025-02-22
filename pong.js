@@ -32,7 +32,7 @@ let ballRadius = 8;
 
 // Game state variables
 let playerScore = 0, aiScore = 0;
-let maxScore = 5;
+let maxScore = 5; // Default winning score
 let gameOver = false;
 let gameStarted = false;
 let pointPause = false;
@@ -60,7 +60,7 @@ const difficulties = {
   "Gravity": { aiReaction: 1.0, ballSpeedMultiplier: 1.0, gravity: 0.3 },
   "Art": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 }
 };
-let aiDifficulty = "Medium";
+let aiDifficulty = "Medium"; // Default mode
 
 // Player movement tracking
 let moveUp = false, moveDown = false;
@@ -68,7 +68,7 @@ let moveUp = false, moveDown = false;
 // Function to start the game when spacebar is pressed.
 function startGame() {
   if (!gameStarted) {
-    aiDifficulty = "Medium"; // default mode
+    aiDifficulty = "Medium";
     bgMusic.src = "audio/" + audioMapping["Medium"];
     bgMusic.load();
     bgMusic.play().catch(err => console.log("Audio playback error:", err));
@@ -106,20 +106,22 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-// Art mode: update persistent rainbow trail.
+// In Art mode, add the current ball position to the art trail.
 function updateArtTrail() {
   artHue = (artHue + 2) % 360;
   artTrail.push({ x: ballX, y: ballY, color: `hsl(${artHue}, 100%, 50%)` });
 }
 
-// Trippy mode: update extra mini balls.
+// Update extra mini balls for Trippy mode.
 function updateExtraBalls() {
   for (let i = extraBalls.length - 1; i >= 0; i--) {
     let b = extraBalls[i];
     b.x += b.vx;
     b.y += b.vy;
     b.alpha -= 0.02;
-    if (b.alpha <= 0) extraBalls.splice(i, 1);
+    if (b.alpha <= 0) {
+      extraBalls.splice(i, 1);
+    }
   }
 }
 
@@ -208,16 +210,20 @@ function moveSingle() {
     }
   }
   
-  if (moveUp && playerY > 0) playerY -= playerSpeed;
-  if (moveDown && playerY < canvas.height - paddleHeight) playerY += playerSpeed;
+  // Increase player's effective speed in UltraInsane and Insaniest modes.
+  let effectivePlayerSpeed = playerSpeed;
+  if (aiDifficulty === "UltraInsane" || aiDifficulty === "Insaniest") {
+    effectivePlayerSpeed = playerSpeed * 1.5;
+  }
+  
+  if (moveUp && playerY > 0) playerY -= effectivePlayerSpeed;
+  if (moveDown && playerY < canvas.height - paddleHeight) playerY += effectivePlayerSpeed;
   lastPlayerY = playerY;
 }
 
 // Drawing function.
 function draw() {
-  // For Art mode, we want a persistent trail.
   if (aiDifficulty === "Art") {
-    // Do not clear the art trail; simply draw it over a black background.
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     artTrail.forEach(pt => {
@@ -227,12 +233,11 @@ function draw() {
       ctx.fill();
     });
   } else if (aiDifficulty === "Trippy") {
-    // In Trippy mode, use a semi-transparent background (for a trail effect).
     let hue = Math.floor(Math.random() * 360);
     ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.3)`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   } else {
-    // For all other modes, clear the canvas fully with opaque black.
+    // Use opaque black to clear any previous images.
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
@@ -294,7 +299,7 @@ function draw() {
   }
 }
 
-// Reset ball.
+// Reset the ball.
 function resetBall() {
   if (aiDifficulty === "BigBall") {
     ballRadius = 40;
@@ -359,19 +364,6 @@ function resetGame() {
   gameOver = false;
   gameStarted = true;
   resetBall();
-}
-
-// Function to start the game when spacebar is pressed.
-function startGame() {
-  if (!gameStarted) {
-    aiDifficulty = "Medium";
-    bgMusic.src = "audio/" + audioMapping["Medium"];
-    bgMusic.load();
-    bgMusic.play().catch(err => console.log("Audio playback error:", err));
-    gameStarted = true;
-    resetBall();
-    gameLoop();
-  }
 }
 
 // Event handlers.
