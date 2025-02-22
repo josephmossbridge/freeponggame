@@ -1,16 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-H6SFD19ED8"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-H6SFD19ED8');
-</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-H6SFD19ED8"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-H6SFD19ED8');
+  </script>
   
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,42 +16,119 @@
   <meta name="keywords" content="Pong game, free Pong, online Pong, arcade game, Gravity mode, Trippy mode, Big Ball mode, Art mode, challenge AI">
   <meta name="author" content="Joseph Mossbridge">
   <title>Free Pong Game - Play Online for Free</title>
+  
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  
   <style>
-    body {
-      text-align: center;
-      background: black;
-      color: white;
-      font-family: Arial, sans-serif;
+    /* Reset some defaults */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
+    
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+      color: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    
+    header {
+      text-align: center;
+      margin: 20px 0;
+    }
+    
+    header h1 {
+      font-size: 3rem;
+      letter-spacing: 1px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+    
+    .intro {
+      max-width: 800px;
+      text-align: center;
+      margin-bottom: 20px;
+      padding: 0 20px;
+      line-height: 1.6;
+    }
+    
     .container {
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
-      align-items: start;
       gap: 20px;
+      width: 100%;
+      max-width: 1200px;
+      padding: 20px;
     }
+    
     canvas {
-      border: 2px solid white;
-      display: block;
+      background: #000;
+      border: 4px solid #fff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.7);
+      border-radius: 8px;
     }
+    
     .info-box {
-      text-align: left;
-      font-size: 16px;
-      padding: 10px;
-      border: 2px solid white;
-      background: #222;
-      max-width: 200px;
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid #fff;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 280px;
+      min-width: 280px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+    
+    .info-box h3 {
+      margin-bottom: 10px;
+      font-size: 1.6rem;
+      border-bottom: 1px solid #fff;
+      padding-bottom: 5px;
+    }
+    
+    .info-box p {
+      margin: 8px 0;
+      font-size: 1rem;
+      line-height: 1.4;
+    }
+    
+    footer {
+      margin: 20px 0;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      canvas, .info-box {
+        width: 90%;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Free Pong Game</h1>
-  <!-- SEO Optimized Paragraphs -->
-  <p>
-    Welcome to the <strong>best free Pong game online</strong>! Challenge an advanced AI in this classic arcade game with enhanced physics and multiple exciting difficulty modes. Whether you prefer the simple challenge of the original Pong or enjoy exploring new twists like Big Ball, Trippy, Gravity, or Art modes, there's something here for everyone.
-  </p>
-  <p>
-    Our game features a variety of fun modes including Insaniest and Ultra Insane for endless replayability and intense arcade action. Experience dynamic gameplay with creative visual effects that make every match a unique adventure. Dive into Free Pong Game and enjoy a retro experience with modern, innovative twists!
-  </p>
+  <header>
+    <h1>Free Pong Game</h1>
+  </header>
+  
+  <section class="intro">
+    <p>
+      Welcome to the <strong>best free Pong game online</strong>! Challenge an advanced AI in this classic arcade game with enhanced physics and multiple exciting difficulty modes. Whether you prefer the simplicity of classic Pong or love exploring innovative twists like Big Ball, Trippy, Gravity, or Art modes, there's something here for everyone.
+    </p>
+    <p>
+      Experience dynamic gameplay, creative visual effects, and intense arcade action with modes ranging from Easy to Insaniest. Get ready to immerse yourself in a retro yet modern arcade adventure!
+    </p>
+  </section>
   
   <div class="container">
     <canvas id="gameCanvas" width="800" height="400"></canvas>
@@ -61,20 +136,24 @@
       <h3>Controls</h3>
       <p>⬆️ Arrow Up: Move Up</p>
       <p>⬇️ Arrow Down: Move Down</p>
-      <p>M - Mute/Unmute Music</p>
-      <h3>Difficulty / Modes</h3>
-      <p>1️⃣ Press 1 - Easy</p>
-      <p>2️⃣ Press 2 - Medium</p>
-      <p>3️⃣ Press 3 - Hard</p>
-      <p>4️⃣ Press 4 - Insane</p>
-      <p>5️⃣ Press 5 - Ultra Insane</p>
-      <p>6️⃣ Press 6 - Insaniest</p>
-      <p>7️⃣ Press 7 - Big Ball</p>
-      <p>8️⃣ Press 8 - Trippy</p>
-      <p>9️⃣ Press 9 - Gravity</p>
-      <p>0️⃣ Press 0 - Art</p>
+      <p>M: Mute/Unmute Music</p>
+      <h3>Modes</h3>
+      <p>1: Easy</p>
+      <p>2: Medium</p>
+      <p>3: Hard</p>
+      <p>4: Insane</p>
+      <p>5: Ultra Insane</p>
+      <p>6: Insaniest</p>
+      <p>7: Big Ball</p>
+      <p>8: Trippy</p>
+      <p>9: Gravity</p>
+      <p>0: Art</p>
     </div>
   </div>
+  
+  <footer>
+    <p>© 2025 Free Pong Game. All rights reserved.</p>
+  </footer>
   
   <!-- Audio element for background music with preload -->
   <audio id="bgMusic" src="audio/2.m4a" preload="auto" loop></audio>
