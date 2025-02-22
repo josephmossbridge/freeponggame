@@ -52,8 +52,6 @@ let artTrail = [];
 let artHue = 0;
 
 // AI Difficulty Levels and Modes
-// "Gravity" mode includes a gravity value (0.3 per frame)
-// "Art" mode leaves a persistent rainbow trail.
 const difficulties = {
   "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.8 },
   "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
@@ -70,6 +68,19 @@ let aiDifficulty = "Medium"; // Default mode
 
 // Player movement tracking
 let moveUp = false, moveDown = false;
+
+// Function to start the game
+function startGame() {
+  if (!gameStarted) {
+    // Set default mode to Medium and load its audio.
+    setDifficulty("Medium");
+    // Start the background music.
+    bgMusic.play().catch(err => console.log("Audio playback error:", err));
+    gameStarted = true;
+    resetBall();
+    gameLoop();
+  }
+}
 
 // Main game loop
 function gameLoop() {
@@ -357,6 +368,17 @@ function resetGame() {
   resetBall();
 }
 
+// Function to start the game when spacebar is pressed.
+function startGame() {
+  if (!gameStarted) {
+    gameStarted = true;
+    resetBall();
+    // Try playing the music (user gesture should allow it)
+    bgMusic.play().catch(err => console.log("Audio playback error:", err));
+    gameLoop();
+  }
+}
+
 // Event handlers.
 function handleKeydown(event) {
   console.log("Key pressed: " + event.key);
@@ -365,11 +387,9 @@ function handleKeydown(event) {
   }
   if (event.key === "ArrowUp") moveUp = true;
   if (event.key === "ArrowDown") moveDown = true;
-  // Check for spacebar using event.key, event.code, or keyCode 32.
+  // Check for spacebar using key, code, or keyCode 32.
   if ((event.key === " " || event.code === "Space" || event.keyCode === 32) && !gameStarted) {
-    gameStarted = true;
-    resetBall();
-    gameLoop();
+    startGame();
   }
   if ((event.key === " " || event.code === "Space" || event.keyCode === 32) && gameOver) {
     resetGame();
