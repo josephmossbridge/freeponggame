@@ -2,6 +2,22 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
+// Get reference to the audio element and define mapping of modes to audio files.
+const bgMusic = document.getElementById("bgMusic");
+const audioMapping = {
+  "Easy": "1.m4a",
+  "Medium": "2.m4a",
+  "Hard": "3.m4a",
+  "Insane": { aiReaction: 1.2, ballSpeedMultiplier: 1.7 },
+  "UltraInsane": "5.m4a",
+  "Insaniest": "6.m4a",
+  "BigBall": "7.m4a",
+  "Trippy": "8.m4a",
+  "Gravity": "9.m4a",
+  "Art": "0.m4a"
+};
+// (Note: In our difficulties object below, we use the same names for modes as keys.)
+
 // Paddle properties
 const paddleWidth = 10;
 const paddleHeight = 80;
@@ -33,12 +49,10 @@ let trippyInterval = 0;
 let extraBalls = [];
 
 // Global variables for Art mode trail
-let artTrail = [];   // stores {x, y, color}
-let artHue = 0;      // current hue for the ball's trail
+let artTrail = [];
+let artHue = 0;
 
 // AI Difficulty Levels and Modes
-// A new mode "Art" is added. When in Art mode the ball moves normally,
-// but every frame its position is added to a persistent rainbow trail.
 const difficulties = {
   "Easy": { aiReaction: 0.4, ballSpeedMultiplier: 0.8 },
   "Medium": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 },
@@ -71,7 +85,7 @@ function gameLoop() {
     currentPaddleHeight = paddleHeight;
   }
   
-  // In Art mode, update the persistent rainbow trail.
+  // For Art mode, update the persistent rainbow trail.
   if (aiDifficulty === "Art") {
     updateArtTrail();
   }
@@ -79,7 +93,6 @@ function gameLoop() {
   // Update extra mini balls (for Trippy mode)
   updateExtraBalls();
   
-  // In single-ball mode, if not paused, update movement.
   if (!pointPause) {
     moveSingle();
   }
@@ -90,19 +103,17 @@ function gameLoop() {
 
 // In Art mode, add the current ball position to the art trail.
 function updateArtTrail() {
-  // Increment artHue (wrap around at 360)
   artHue = (artHue + 2) % 360;
-  // Add current ball position and a color based on artHue.
   artTrail.push({ x: ballX, y: ballY, color: `hsl(${artHue}, 100%, 50%)` });
 }
 
-// Update extra mini balls (for Trippy mode): move them and fade them out.
+// Update extra mini balls: move them and fade them out.
 function updateExtraBalls() {
   for (let i = extraBalls.length - 1; i >= 0; i--) {
     let b = extraBalls[i];
     b.x += b.vx;
     b.y += b.vy;
-    b.alpha -= 0.02; // They fade, as before.
+    b.alpha -= 0.02;
     if (b.alpha <= 0) {
       extraBalls.splice(i, 1);
     }
@@ -111,7 +122,6 @@ function updateExtraBalls() {
 
 // Single-ball movement logic.
 function moveSingle() {
-  // If in Gravity mode, apply gravity each frame.
   if (aiDifficulty === "Gravity") {
     ballSpeedY += difficulties["Gravity"].gravity;
   }
@@ -119,13 +129,11 @@ function moveSingle() {
   ballX += ballSpeedX;
   ballY += ballSpeedY;
   
-  // Bounce off top.
   if (ballY - ballRadius < 0) {
     ballY = ballRadius;
     ballSpeedY *= -1;
   }
   
-  // Bounce off bottom.
   if (ballY + ballRadius > canvas.height) {
     ballY = canvas.height - ballRadius;
     if (aiDifficulty === "Gravity") {
@@ -139,7 +147,6 @@ function moveSingle() {
   let playerPaddleSpeed = playerY - lastPlayerY;
   lastPlayerY = playerY;
   
-  // Collision with player's paddle.
   if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
     ballX = 20 + ballRadius;
     ballSpeedX = Math.abs(ballSpeedX);
@@ -153,7 +160,6 @@ function moveSingle() {
     }
   }
   
-  // Collision with AI paddle.
   if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight) {
     ballX = canvas.width - 20 - ballRadius;
     ballSpeedX = -Math.abs(ballSpeedX);
@@ -166,32 +172,17 @@ function moveSingle() {
     }
   }
   
-  // Scoring: if the ball goes offscreen.
   if (ballX - ballRadius < 0) {
     aiScore++;
-    if (aiScore === maxScore) {
-      endGame("lose");
-      return;
-    } else {
-      pointPause = true;
-      setTimeout(() => { resetBall(); pointPause = false; }, 1000);
-      return;
-    }
+    if (aiScore === maxScore) { endGame("lose"); return; }
+    else { pointPause = true; setTimeout(() => { resetBall(); pointPause = false; }, 1000); return; }
   } else if (ballX + ballRadius > canvas.width) {
     playerScore++;
-    if (playerScore === maxScore) {
-      endGame("win");
-      return;
-    } else {
-      pointPause = true;
-      setTimeout(() => { resetBall(); pointPause = false; }, 1000);
-      return;
-    }
+    if (playerScore === maxScore) { endGame("win"); return; }
+    else { pointPause = true; setTimeout(() => { resetBall(); pointPause = false; }, 1000); return; }
   }
   
-  // AI paddle movement.
   if (aiDifficulty === "Gravity") {
-    // Predict where the ball will be when it reaches the AI paddle's front edge.
     let targetX = canvas.width - 20 - ballRadius;
     let tPred = (ballSpeedX > 0) ? (targetX - ballX) / ballSpeedX : 0;
     if (tPred > 60) tPred = 60;
@@ -201,12 +192,11 @@ function moveSingle() {
     let paddleCenter = aiY + paddleHeight / 2;
     let diff = predictedY - paddleCenter;
     let desiredMove = diff * difficulties["Gravity"].aiReaction;
-    let maxMove = playerSpeed; // Clamp movement per frame.
+    let maxMove = playerSpeed;
     if (desiredMove > maxMove) desiredMove = maxMove;
     if (desiredMove < -maxMove) desiredMove = -maxMove;
     aiY += desiredMove;
   } else {
-    // Regular AI movement: follow the ball's current y.
     let aiReactionSpeed = difficulties[aiDifficulty].aiReaction;
     if (aiY + paddleHeight / 2 < ballY - 10) {
       aiY += playerSpeed * aiReactionSpeed;
@@ -215,7 +205,6 @@ function moveSingle() {
     }
   }
   
-  // Player paddle movement.
   if (moveUp && playerY > 0) playerY -= playerSpeed;
   if (moveDown && playerY < canvas.height - paddleHeight) playerY += playerSpeed;
   lastPlayerY = playerY;
@@ -223,12 +212,9 @@ function moveSingle() {
 
 // Draw everything.
 function draw() {
-  // For Art mode, we want a persistent rainbow trail.
   if (aiDifficulty === "Art") {
-    // In Art mode, do NOT clear the existing trail.
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    // Draw the art trail from previous frames.
     artTrail.forEach(pt => {
       ctx.fillStyle = pt.color;
       ctx.beginPath();
@@ -252,19 +238,16 @@ function draw() {
     return;
   }
   
-  // Draw paddles.
   let ph = (aiDifficulty === "Trippy" || aiDifficulty === "Insaniest") ? currentPaddleHeight : paddleHeight;
   ctx.fillStyle = "white";
   ctx.fillRect(10, playerY, paddleWidth, ph);
   ctx.fillRect(canvas.width - 20, aiY, paddleWidth, ph);
   
-  // Draw the main ball.
   ctx.fillStyle = "white";
   ctx.beginPath();
   ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
   ctx.fill();
   
-  // In Trippy mode, draw extra mini balls.
   if (aiDifficulty === "Trippy") {
     extraBalls.forEach(b => {
       ctx.fillStyle = `rgba(255,255,255,${b.alpha.toFixed(2)})`;
@@ -284,7 +267,6 @@ function draw() {
     }
   }
   
-  // Draw scores and mode label.
   ctx.fillStyle = "white";
   ctx.font = "20px Arial";
   ctx.textAlign = "left";
@@ -294,7 +276,6 @@ function draw() {
   ctx.textAlign = "center";
   ctx.fillText(`Mode: ${aiDifficulty}`, canvas.width / 2, 30);
   
-  // Game over message.
   if (gameOver) {
     ctx.fillStyle = "rgba(0,0,0,0.8)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -330,29 +311,29 @@ function resetBall() {
     ballSpeedY = (Math.random() * 6 - 3) * speedMultiplier;
   }
   
-  // In Art mode, preserve the art trail (do not clear it).
   if (aiDifficulty === "Art") {
-    // (artTrail remains as is)
+    // In Art mode, preserve the art trail.
   } else {
-    // Clear art trail when switching out of Art mode.
     artTrail = [];
   }
 }
 
-// Change mode/difficulty and reset the game.
+// Change mode/difficulty and reset the game. Also update background music.
 function setDifficulty(level) {
   if (difficulties[level]) {
     aiDifficulty = level;
     console.log("Mode set to: " + aiDifficulty);
     extraBalls = [];
-    // For non-BigBall modes, winning score remains 5.
     maxScore = 5;
-    // If entering Art mode, initialize art trail variables.
     if (aiDifficulty === "Art") {
       artTrail = [];
       artHue = 0;
     }
     resetGame();
+    if (bgMusic) {
+      bgMusic.src = "audio/" + audioMapping[aiDifficulty];
+      bgMusic.play().catch(err => console.log("Audio playback error:", err));
+    }
   } else {
     console.log("No mode for: " + level);
   }
@@ -377,6 +358,9 @@ function resetGame() {
 // Event handlers.
 function handleKeydown(event) {
   console.log("Key pressed: " + event.key);
+  if (event.key.toLowerCase() === "m") {
+    bgMusic.muted = !bgMusic.muted;
+  }
   if (event.key === "ArrowUp") moveUp = true;
   if (event.key === "ArrowDown") moveDown = true;
   if (event.key === " " && !gameStarted) {
