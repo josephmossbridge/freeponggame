@@ -23,8 +23,9 @@ const paddleHeight = 80;
 let playerY = canvas.height / 2 - paddleHeight / 2;
 let aiY = playerY;
 const playerSpeed = 5;
-// We'll track paddle positions to derive velocities.
-let lastPlayerY = playerY;
+// Global variable for player paddle velocity (set in key events)
+let playerVelocity = 0;
+// For AI, we'll compute velocity using the difference between frames:
 let lastAiY = aiY;
 
 // Base ball properties
@@ -32,7 +33,7 @@ const baseBallSpeedX = 6.3, baseBallSpeedY = 6.3;
 let ballSpeedX = 0, ballSpeedY = 0;
 let ballRadius = 8;
 
-// Game state variables
+// Game state
 let playerScore = 0, aiScore = 0;
 let maxScore = 5;
 let gameOver = false;
@@ -62,7 +63,7 @@ const difficulties = {
   "Gravity": { aiReaction: 1.0, ballSpeedMultiplier: 1.0, gravity: 0.3 },
   "Art": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 }
 };
-let aiDifficulty = "Medium"; // Default mode
+let aiDifficulty = "Medium";
 
 // Player movement tracking
 let moveUp = false, moveDown = false;
@@ -83,12 +84,6 @@ function startGame() {
 
 // Main game loop.
 function gameLoop() {
-  // Update paddle velocities.
-  // Calculate the change in player's position since last frame.
-  let newPlayerVelocity = playerY - lastPlayerY;
-  // For AI, calculate its velocity.
-  let newAiVelocity = aiY - lastAiY;
-  
   // Update Trippy mode effects.
   if (aiDifficulty === "Trippy") {
     const now = Date.now();
@@ -102,29 +97,32 @@ function gameLoop() {
     currentPaddleHeight = paddleHeight;
   }
   
-  // In Art mode, update the persistent rainbow trail.
   if (aiDifficulty === "Art") {
     updateArtTrail();
   }
   
-  // Update extra mini balls for Trippy mode.
   updateExtraBalls();
   
   if (!pointPause) {
-    moveSingle(newPlayerVelocity, newAiVelocity);
+    // Pass the current player's velocity and the AI paddle's velocity.
+    // For AI, compute velocity as difference since last frame.
+    let aiVelocity = aiY - lastAiY;
+    moveSingle(playerVelocity, aiVelocity);
   }
   
   draw();
+  // Update lastAiY for next frame.
+  lastAiY = aiY;
   requestAnimationFrame(gameLoop);
 }
 
-// Art mode: add current ball position to art trail.
+// Art mode: update persistent rainbow trail.
 function updateArtTrail() {
   artHue = (artHue + 2) % 360;
   artTrail.push({ x: ballX, y: ballY, color: `hsl(${artHue}, 100%, 50%)` });
 }
 
-// Update extra mini balls (Trippy mode).
+// Update extra mini balls for Trippy mode.
 function updateExtraBalls() {
   for (let i = extraBalls.length - 1; i >= 0; i--) {
     let b = extraBalls[i];
@@ -135,8 +133,9 @@ function updateExtraBalls() {
   }
 }
 
-// Single-ball movement logic. Accepts newPlayerVelocity and newAiVelocity.
-function moveSingle(newPlayerVelocity, newAiVelocity) {
+// Single-ball movement logic.
+// Accepts playerVel (from key events) and aiVel (computed from previous frame).
+function moveSingle(playerVel, aiVel) {
   if (aiDifficulty === "Gravity") {
     ballSpeedY += difficulties["Gravity"].gravity;
   }
@@ -144,28 +143,30 @@ function moveSingle(newPlayerVelocity, newAiVelocity) {
   ballX += ballSpeedX;
   ballY += ballSpeedY;
   
+  // Bounce off top.
   if (ballY - ballRadius < 0) {
     ballY = ballRadius;
     ballSpeedY *= -1;
   }
   
+  // Bounce off bottom.
   if (ballY + ballRadius > canvas.height) {
     ballY = canvas.height - ballRadius;
     if (aiDifficulty === "Gravity") {
-      ballSpeedY = -Math.max(Math.abs(ballSpeedY) * 0.9, 2);
+      // Instead of exponential acceleration, bounce up with a fixed modest speed.
+      ballSpeedY = -2;
     } else {
       ballSpeedY *= -1;
       ballSpeedX *= 1.1;
     }
   }
   
-  // Update player's spin effect.
-  // The player's paddle movement (newPlayerVelocity) affects the ball's vertical speed.
+  // Collision with player's paddle.
   if (ballX - ballRadius < 20 && ballY > playerY && ballY < playerY + paddleHeight) {
     ballX = 20 + ballRadius;
     ballSpeedX = Math.abs(ballSpeedX);
-    // Apply spin using player's velocity with a multiplier of 0.7.
-    ballSpeedY += newPlayerVelocity * 0.7;
+    // Apply spin: add player's velocity multiplied by a smaller factor.
+    ballSpeedY += playerVel * 0.3;
     if (aiDifficulty === "UltraInsane") {
       ballSpeedX *= 1.2;
       ballSpeedY *= 1.2;
@@ -179,8 +180,8 @@ function moveSingle(newPlayerVelocity, newAiVelocity) {
   if (ballX + ballRadius > canvas.width - 20 && ballY > aiY && ballY < aiY + paddleHeight) {
     ballX = canvas.width - 20 - ballRadius;
     ballSpeedX = -Math.abs(ballSpeedX);
-    // Apply spin using AI paddle's velocity with a multiplier of 0.7.
-    ballSpeedY += newAiVelocity * 0.7;
+    // Apply spin from AI paddle's velocity.
+    ballSpeedY += aiVel * 0.3;
     if (aiDifficulty === "UltraInsane") {
       ballSpeedX *= 1.2;
       ballSpeedY *= 1.2;
@@ -190,7 +191,7 @@ function moveSingle(newPlayerVelocity, newAiVelocity) {
     }
   }
   
-  // Scoring logic.
+  // Scoring.
   if (ballX - ballRadius < 0) {
     aiScore++;
     if (aiScore === maxScore) { endGame("lose"); return; }
@@ -225,9 +226,6 @@ function moveSingle(newPlayerVelocity, newAiVelocity) {
     }
   }
   
-  // Update lastAiY after AI movement.
-  lastAiY = aiY;
-  
   // Player movement.
   let effectivePlayerSpeed = playerSpeed;
   if (aiDifficulty === "UltraInsane" || aiDifficulty === "Insaniest") {
@@ -235,7 +233,6 @@ function moveSingle(newPlayerVelocity, newAiVelocity) {
   }
   if (moveUp && playerY > 0) playerY -= effectivePlayerSpeed;
   if (moveDown && playerY < canvas.height - paddleHeight) playerY += effectivePlayerSpeed;
-  lastPlayerY = playerY;
 }
 
 // Drawing function.
@@ -388,8 +385,15 @@ function handleKeydown(event) {
   if (event.key.toLowerCase() === "m") {
     bgMusic.muted = !bgMusic.muted;
   }
-  if (event.key === "ArrowUp") moveUp = true;
-  if (event.key === "ArrowDown") moveDown = true;
+  if (event.key === "ArrowUp") {
+    moveUp = true;
+    // Set playerVelocity accordingly.
+    playerVelocity = -(aiDifficulty === "UltraInsane" || aiDifficulty === "Insaniest" ? playerSpeed * 1.5 : playerSpeed);
+  }
+  if (event.key === "ArrowDown") {
+    moveDown = true;
+    playerVelocity = (aiDifficulty === "UltraInsane" || aiDifficulty === "Insaniest" ? playerSpeed * 1.5 : playerSpeed);
+  }
   if ((event.key === " " || event.code === "Space" || event.keyCode === 32) && !gameStarted) {
     startGame();
   }
@@ -424,8 +428,14 @@ function handleKeydown(event) {
 }
 
 function handleKeyup(event) {
-  if (event.key === "ArrowUp") moveUp = false;
-  if (event.key === "ArrowDown") moveDown = false;
+  if (event.key === "ArrowUp") {
+    moveUp = false;
+    playerVelocity = 0;
+  }
+  if (event.key === "ArrowDown") {
+    moveDown = false;
+    playerVelocity = 0;
+  }
 }
 
 document.addEventListener("keydown", handleKeydown);
