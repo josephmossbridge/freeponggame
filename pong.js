@@ -236,8 +236,12 @@ function moveSingle(playerVel, aiVel) {
   if (moveDown && playerY < canvas.height - paddleHeight) playerY += effectivePlayerSpeed;
 }
 
-// Drawing function.
+// Modernized drawing function.
 function draw() {
+  // Clear canvas.
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // For Art or Trippy modes, use the existing specialized backgrounds.
   if (aiDifficulty === "Art") {
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -252,28 +256,48 @@ function draw() {
     ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.3)`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   } else {
-    ctx.fillStyle = "black";
+    // Create a smooth background gradient.
+    let bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    bgGradient.addColorStop(0, "#000");
+    bgGradient.addColorStop(1, "#111");
+    ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
   
-  if (!gameStarted) {
-    ctx.fillStyle = "white";
-    ctx.font = "30px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("Press SPACEBAR to Start", canvas.width / 2, canvas.height / 2);
-    return;
-  }
+  // Draw paddles with gradients and subtle shadows.
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.5)";
+  ctx.shadowBlur = 10;
   
-  let ph = (aiDifficulty === "Trippy" || aiDifficulty === "Insaniest") ? currentPaddleHeight : paddleHeight;
-  ctx.fillStyle = "white";
-  ctx.fillRect(10, playerY, paddleWidth, ph);
-  ctx.fillRect(canvas.width - 20, aiY, paddleWidth, ph);
+  // Player paddle: green gradient.
+  let paddleGradient = ctx.createLinearGradient(0, playerY, 0, playerY + paddleHeight);
+  paddleGradient.addColorStop(0, "#4CAF50");
+  paddleGradient.addColorStop(1, "#2E7D32");
+  ctx.fillStyle = paddleGradient;
+  ctx.fillRect(10, playerY, paddleWidth, paddleHeight);
   
-  ctx.fillStyle = "white";
+  // AI paddle: red gradient.
+  let aiPaddleGradient = ctx.createLinearGradient(0, aiY, 0, aiY + paddleHeight);
+  aiPaddleGradient.addColorStop(0, "#F44336");
+  aiPaddleGradient.addColorStop(1, "#B71C1C");
+  ctx.fillStyle = aiPaddleGradient;
+  ctx.fillRect(canvas.width - 20, aiY, paddleWidth, paddleHeight);
+  ctx.restore();
+  
+  // Draw the ball with a radial gradient for a glowing effect.
+  ctx.save();
+  ctx.shadowColor = "rgba(255,255,255,0.8)";
+  ctx.shadowBlur = 15;
+  let ballGradient = ctx.createRadialGradient(ballX, ballY, ballRadius / 2, ballX, ballY, ballRadius);
+  ballGradient.addColorStop(0, "#fff");
+  ballGradient.addColorStop(1, "#aaa");
+  ctx.fillStyle = ballGradient;
   ctx.beginPath();
   ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
   ctx.fill();
+  ctx.restore();
   
+  // Draw extra mini balls for Trippy mode.
   if (aiDifficulty === "Trippy") {
     extraBalls.forEach(b => {
       ctx.fillStyle = `rgba(255,255,255,${b.alpha.toFixed(2)})`;
@@ -293,8 +317,9 @@ function draw() {
     }
   }
   
-  ctx.fillStyle = "white";
-  ctx.font = "20px Arial";
+  // Draw the score and mode with a modern font style.
+  ctx.fillStyle = "#fff";
+  ctx.font = "20px Roboto";
   ctx.textAlign = "left";
   ctx.fillText(`Player: ${playerScore}`, 20, 30);
   ctx.textAlign = "right";
@@ -302,13 +327,15 @@ function draw() {
   ctx.textAlign = "center";
   ctx.fillText(`Mode: ${aiDifficulty}`, canvas.width / 2, 30);
   
+  // Game Over overlay.
   if (gameOver) {
-    ctx.fillStyle = "rgba(0,0,0,0.8)";
+    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "white";
-    ctx.font = "40px Arial";
+    ctx.fillStyle = "#fff";
+    ctx.font = "40px Roboto";
+    ctx.textAlign = "center";
     ctx.fillText(gameOver === "win" ? "🎉 YOU WIN! 🎉" : "😞 YOU LOSE! 😞", canvas.width / 2, canvas.height / 2 - 20);
-    ctx.font = "20px Arial";
+    ctx.font = "20px Roboto";
     ctx.fillText("Press SPACEBAR to Restart", canvas.width / 2, canvas.height / 2 + 40);
   }
 }
