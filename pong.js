@@ -2,7 +2,7 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// Get the audio element and mapping (files must be in an "audio" folder)
+// Get the audio element and define mapping of modes to audio files.
 const bgMusic = document.getElementById("bgMusic");
 const audioMapping = {
   "Easy": "1.m4a",
@@ -30,7 +30,7 @@ const baseBallSpeedX = 6.3, baseBallSpeedY = 6.3;
 let ballSpeedX = 0, ballSpeedY = 0;
 let ballRadius = 8;
 
-// Game state
+// Game state variables
 let playerScore = 0, aiScore = 0;
 let maxScore = 5;
 let gameOver = false;
@@ -60,16 +60,15 @@ const difficulties = {
   "Gravity": { aiReaction: 1.0, ballSpeedMultiplier: 1.0, gravity: 0.3 },
   "Art": { aiReaction: 0.6, ballSpeedMultiplier: 1.0 }
 };
-let aiDifficulty = "Medium"; // default mode
+let aiDifficulty = "Medium";
 
 // Player movement tracking
 let moveUp = false, moveDown = false;
 
-// Function to start the game on spacebar press
+// Function to start the game when spacebar is pressed.
 function startGame() {
   if (!gameStarted) {
-    // Set default mode to Medium manually.
-    aiDifficulty = "Medium";
+    aiDifficulty = "Medium"; // default mode
     bgMusic.src = "audio/" + audioMapping["Medium"];
     bgMusic.load();
     bgMusic.play().catch(err => console.log("Audio playback error:", err));
@@ -214,9 +213,11 @@ function moveSingle() {
   lastPlayerY = playerY;
 }
 
-// Draw everything.
+// Drawing function.
 function draw() {
+  // For Art mode, we want a persistent trail.
   if (aiDifficulty === "Art") {
+    // Do not clear the art trail; simply draw it over a black background.
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     artTrail.forEach(pt => {
@@ -226,11 +227,13 @@ function draw() {
       ctx.fill();
     });
   } else if (aiDifficulty === "Trippy") {
+    // In Trippy mode, use a semi-transparent background (for a trail effect).
     let hue = Math.floor(Math.random() * 360);
     ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.3)`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   } else {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+    // For all other modes, clear the canvas fully with opaque black.
+    ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
   
@@ -291,7 +294,7 @@ function draw() {
   }
 }
 
-// Reset the ball.
+// Reset ball.
 function resetBall() {
   if (aiDifficulty === "BigBall") {
     ballRadius = 40;
@@ -361,7 +364,6 @@ function resetGame() {
 // Function to start the game when spacebar is pressed.
 function startGame() {
   if (!gameStarted) {
-    // Default mode is Medium.
     aiDifficulty = "Medium";
     bgMusic.src = "audio/" + audioMapping["Medium"];
     bgMusic.load();
@@ -380,7 +382,6 @@ function handleKeydown(event) {
   }
   if (event.key === "ArrowUp") moveUp = true;
   if (event.key === "ArrowDown") moveDown = true;
-  // Check for spacebar using key, code, or keyCode 32.
   if ((event.key === " " || event.code === "Space" || event.keyCode === 32) && !gameStarted) {
     startGame();
   }
@@ -422,5 +423,5 @@ function handleKeyup(event) {
 document.addEventListener("keydown", handleKeydown);
 document.addEventListener("keyup", handleKeyup);
 
-// Draw initial screen.
+// Draw the initial screen.
 draw();
