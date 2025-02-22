@@ -10,7 +10,7 @@ let aiY = playerY;
 const playerSpeed = 5;
 let lastPlayerY = playerY;
 
-// Ball properties for single-ball modes
+// Ball properties (for single-ball modes)
 const baseBallSpeedX = 6.3, baseBallSpeedY = 6.3;
 let ballSpeedX = 0, ballSpeedY = 0;
 let ballRadius = 8;
@@ -20,6 +20,7 @@ let playerScore = 0, aiScore = 0;
 let maxScore = 5; // Default winning score
 let gameOver = false;
 let gameStarted = false;
+let paused = false;  // Paused state after a point is scored
 
 // Variables for Trippy mode effects
 let currentPaddleHeight = paddleHeight;
@@ -47,36 +48,39 @@ let moveUp = false, moveDown = false;
 
 // Main game loop
 function gameLoop() {
-  // For Trippy mode, update effects every 1–3 seconds.
-  if (aiDifficulty === "Trippy") {
-    const now = Date.now();
-    if (!lastTrippyUpdate || now - lastTrippyUpdate >= trippyInterval) {
-      currentPaddleHeight = 30 + Math.random() * 170; // Between 30 and 200
-      ballRadius = 8 + Math.random() * 32; // Between 8 and 40
-      trippyInterval = 1000 + Math.random() * 2000; // 1–3 seconds
-      lastTrippyUpdate = now;
+  // If the game is paused (after a point), skip updating movement.
+  if (!paused) {
+    // For Trippy mode, update effects every 1–3 seconds.
+    if (aiDifficulty === "Trippy") {
+      const now = Date.now();
+      if (!lastTrippyUpdate || now - lastTrippyUpdate >= trippyInterval) {
+        currentPaddleHeight = 30 + Math.random() * 170; // Between 30 and 200
+        ballRadius = 8 + Math.random() * 32; // Between 8 and 40
+        trippyInterval = 1000 + Math.random() * 2000; // 1–3 seconds
+        lastTrippyUpdate = now;
+      }
+    } else {
+      currentPaddleHeight = paddleHeight;
     }
-  } else {
-    currentPaddleHeight = paddleHeight;
+  
+    // Update extra mini balls (for Trippy mode)
+    updateExtraBalls();
+  
+    // Run movement logic only when not paused.
+    moveSingle();
   }
-  
-  // Update extra mini balls (for Trippy mode)
-  updateExtraBalls();
-  
-  // Always use the single-ball mode logic
-  moveSingle();
   
   draw();
   requestAnimationFrame(gameLoop);
 }
 
-// Update extra mini balls: move them and fade them out.
+// Update extra mini balls: move and fade them out.
 function updateExtraBalls() {
   for (let i = extraBalls.length - 1; i >= 0; i--) {
     let b = extraBalls[i];
     b.x += b.vx;
     b.y += b.vy;
-    b.alpha -= 0.02; // Fade out over time
+    b.alpha -= 0.02; // Fade out
     if (b.alpha <= 0) {
       extraBalls.splice(i, 1);
     }
@@ -122,15 +126,15 @@ function moveSingle() {
     }
   }
   
-  // Scoring: if the ball goes offscreen.
+  // Scoring: if ball goes offscreen, pause the game and wait for spacebar to continue.
   if (ballX - ballRadius < 0) {
     aiScore++;
     if (aiScore === maxScore) endGame("lose");
-    else resetBall();
+    else pauseAfterPoint();
   } else if (ballX + ballRadius > canvas.width) {
     playerScore++;
     if (playerScore === maxScore) endGame("win");
-    else resetBall();
+    else pauseAfterPoint();
   }
   
   // AI paddle follows the ball.
@@ -147,9 +151,9 @@ function moveSingle() {
   lastPlayerY = playerY;
 }
 
-// Draw everything.
+// Draw function
 function draw() {
-  // Background: if Trippy, use a random rainbow color; otherwise, semi-transparent black.
+  // Background: if Trippy mode, random rainbow; otherwise, semi-transparent black.
   if (aiDifficulty === "Trippy") {
     let hue = Math.floor(Math.random() * 360);
     ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.3)`;
@@ -159,15 +163,19 @@ function draw() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
   if (!gameStarted) {
+    // If the game is not started (or paused), show the appropriate overlay.
     ctx.fillStyle = "white";
     ctx.font = "30px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("Press SPACEBAR to Start", canvas.width / 2, canvas.height / 2);
+    if (paused) {
+      ctx.fillText("Press SPACEBAR to continue", canvas.width / 2, canvas.height / 2);
+    } else {
+      ctx.fillText("Press SPACEBAR to Start", canvas.width / 2, canvas.height / 2);
+    }
     return;
   }
   
-  // Draw paddles. (For Trippy or Insaniest modes, you could use currentPaddleHeight;
-  // here we'll use fixed paddleHeight for simplicity in non-Trippy modes.)
+  // Draw paddles.
   let ph = (aiDifficulty === "Trippy" || aiDifficulty === "Insaniest") ? currentPaddleHeight : paddleHeight;
   ctx.fillStyle = "white";
   ctx.fillRect(10, playerY, paddleWidth, ph);
@@ -187,7 +195,6 @@ function draw() {
       ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
       ctx.fill();
     });
-    // Spawn extra mini balls with a small probability.
     if (Math.random() < 0.1) {
       extraBalls.push({
         x: ballX,
@@ -200,7 +207,7 @@ function draw() {
     }
   }
   
-  // Draw scores and current mode.
+  // Draw scores and mode label.
   ctx.fillStyle = "white";
   ctx.font = "20px Arial";
   ctx.textAlign = "left";
@@ -210,7 +217,7 @@ function draw() {
   ctx.textAlign = "center";
   ctx.fillText(`Mode: ${aiDifficulty}`, canvas.width / 2, 30);
   
-  // If game is over, display a message.
+  // If game over, display a message.
   if (gameOver) {
     ctx.fillStyle = "rgba(0,0,0,0.8)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -222,7 +229,7 @@ function draw() {
   }
 }
 
-// Reset the ball (for single-ball modes).
+// Reset the ball (single-ball mode).
 function resetBall() {
   ballRadius = 8;
   let speedMultiplier = difficulties[aiDifficulty].ballSpeedMultiplier;
@@ -232,13 +239,19 @@ function resetBall() {
   ballSpeedY = (Math.random() * 6 - 3) * speedMultiplier;
 }
 
-// Change mode/difficulty and reset game.
+// Pause the game after a point is scored.
+function pauseAfterPoint() {
+  paused = true;
+  gameStarted = false;
+}
+
+// Change mode/difficulty and reset the game.
 function setDifficulty(level) {
   if (difficulties[level]) {
     aiDifficulty = level;
     console.log("Mode set to: " + aiDifficulty);
     extraBalls = [];
-    // For non-Infinite modes, scoring target remains at 5.
+    // For non-Infinite modes, scoring target remains 5.
     maxScore = 5;
     resetGame();
   } else {
@@ -246,7 +259,7 @@ function setDifficulty(level) {
   }
 }
 
-// End the game.
+// End game.
 function endGame(result) {
   gameOver = result;
   ballSpeedX = 0;
@@ -259,20 +272,34 @@ function resetGame() {
   aiScore = 0;
   gameOver = false;
   gameStarted = true;
+  paused = false;
   resetBall();
 }
 
 // Event handlers.
 function handleKeydown(event) {
   console.log("Key pressed: " + event.key);
+  // If spacebar is pressed and the game is paused, resume.
+  if (event.key === " ") {
+    if (paused) {
+      paused = false;
+      gameStarted = true;
+      resetBall();
+      return;
+    }
+    if (!gameStarted) {
+      gameStarted = true;
+      resetBall();
+      gameLoop();
+      return;
+    }
+    if (gameOver) {
+      resetGame();
+      return;
+    }
+  }
   if (event.key === "ArrowUp") moveUp = true;
   if (event.key === "ArrowDown") moveDown = true;
-  if (event.key === " " && !gameStarted) {
-    gameStarted = true;
-    resetBall();
-    gameLoop();
-  }
-  if (event.key === " " && gameOver) resetGame();
   if (event.key === "1") setDifficulty("Easy");
   if (event.key === "2") setDifficulty("Medium");
   if (event.key === "3") setDifficulty("Hard");
@@ -300,5 +327,5 @@ function handleKeyup(event) {
 document.addEventListener("keydown", handleKeydown);
 document.addEventListener("keyup", handleKeyup);
 
-// Draw initial screen.
+// Draw the initial screen.
 draw();
