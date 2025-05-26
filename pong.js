@@ -400,9 +400,13 @@ function resetGame() {
   resetBall();
 }
 
-// Event handlers.
 function handleKeydown(event) {
+  if (["ArrowUp", "ArrowDown", " "].includes(event.key)) {
+    event.preventDefault(); // Prevent scrolling
+  }
+
   console.log("Key pressed: " + event.key);
+  
   if (event.key.toLowerCase() === "m") {
     bgMusic.muted = !bgMusic.muted;
   }
@@ -425,27 +429,13 @@ function handleKeydown(event) {
   if (event.key === "3") setDifficulty("Hard");
   if (event.key === "4") setDifficulty("Insane");
   if (event.key === "5") setDifficulty("UltraInsane");
-  if (event.key === "6") {
-    console.log("Setting mode to Insaniest");
-    setDifficulty("Insaniest");
-  }
-  if (event.key === "7" || event.key === "Numpad7") {
-    console.log("Setting mode to BigBall");
-    setDifficulty("BigBall");
-  }
-  if (event.key === "8" || event.key === "Numpad8") {
-    console.log("Setting mode to Trippy");
-    setDifficulty("Trippy");
-  }
-  if (event.key === "9" || event.key === "Numpad9") {
-    console.log("Setting mode to Gravity");
-    setDifficulty("Gravity");
-  }
-  if (event.key === "0" || event.key === "Numpad0") {
-    console.log("Setting mode to Art");
-    setDifficulty("Art");
-  }
+  if (event.key === "6") setDifficulty("Insaniest");
+  if (event.key === "7" || event.key === "Numpad7") setDifficulty("BigBall");
+  if (event.key === "8" || event.key === "Numpad8") setDifficulty("Trippy");
+  if (event.key === "9" || event.key === "Numpad9") setDifficulty("Gravity");
+  if (event.key === "0" || event.key === "Numpad0") setDifficulty("Art");
 }
+
 
 function handleKeyup(event) {
   if (event.key === "ArrowUp") {
